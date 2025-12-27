@@ -2,16 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
-import '../../../models/order_model.dart';
-
-/// Order status enumeration matching database schema
-enum OrderStatus {
-  pending,
-  processing,
-  shipped,
-  delivered,
-  cancelled,
-}
+import '../../../../models/order.dart';
+import '../../../../features/seller/data/models/seller_stats.dart';
 
 /// Abstract interface for order operations
 /// Defines contract for order repository implementations
@@ -44,6 +36,10 @@ abstract class IOrderRepository {
   /// Get orders containing seller's products
   /// Requirements: 7.8
   Future<Either<Failure, List<Order>>> getSellerOrders(String sellerId);
+
+  /// Get seller dashboard stats
+  /// Requirements: 18.2
+  Future<Either<Failure, SellerStats>> getSellerStats(String sellerId);
 }
 
 /// Concrete implementation of order repository using Supabase
@@ -65,7 +61,7 @@ class OrderRepository implements IOrderRepository {
       // Calculate order totals
       final subtotal = items.fold<double>(
         0.0,
-        (sum, item) => sum + (item.quantity * item.price),
+        (sum, item) => sum + (item.quantity * item.unitPrice),
       );
       final platformCommission = subtotal * 0.10; // 10% commission
       final total = subtotal;
@@ -74,7 +70,7 @@ class OrderRepository implements IOrderRepository {
       final orderData = {
         'user_id': userId,
         'address_id': addressId,
-        'status': 'pending',
+        'status': OrderStatus.pending.name,
         'subtotal': subtotal,
         'platform_commission': platformCommission,
         'total': total,
@@ -98,8 +94,9 @@ class OrderRepository implements IOrderRepository {
           'product_id': item.productId,
           'product_name': item.productName,
           'quantity': item.quantity,
-          'unit_price': item.price,
-          'total_price': item.quantity * item.price,
+          'unit_price': item.unitPrice,
+          'total_price': item.quantity * item.unitPrice,
+          'seller_id': item.sellerId, // Ensure sellerId is passed
         });
 
         // Decrement product stock using RPC for atomic operation
@@ -115,7 +112,7 @@ class OrderRepository implements IOrderRepository {
       // Create order status history entry
       await _supabaseConfig.from('order_status_history').insert({
         'order_id': orderId,
-        'status': 'pending',
+        'status': OrderStatus.pending.name,
         'note': 'Order created',
         'created_at': DateTime.now().toIso8601String(),
       });
@@ -137,20 +134,24 @@ class OrderRepository implements IOrderRepository {
         *,
         order_items(
           id,
+          order_id,
           product_id,
           product_name,
           quantity,
           unit_price,
-          total_price
+          total_price,
+          seller_id
         ),
         order_status_history(
+          id,
+          order_id,
           status,
           note,
           created_at
         )
       ''').eq('id', id).single();
 
-      final order = _parseOrder(response);
+      final order = Order.fromJson(response);
       return Right(order);
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST116') {
@@ -169,16 +170,25 @@ class OrderRepository implements IOrderRepository {
         *,
         order_items(
           id,
+          order_id,
           product_id,
           product_name,
           quantity,
           unit_price,
-          total_price
+          total_price,
+          seller_id
+        ),
+        order_status_history(
+          id,
+          order_id,
+          status,
+          note,
+          created_at
         )
       ''').eq('user_id', userId).order('created_at', ascending: false);
 
       final orders = (response as List)
-          .map((json) => _parseOrder(json as Map<String, dynamic>))
+          .map((json) => Order.fromJson(json as Map<String, dynamic>))
           .toList();
 
       return Right(orders);
@@ -203,12 +213,11 @@ class OrderRepository implements IOrderRepository {
       }
 
       final currentOrder = currentOrderResult.getOrElse(() => throw Exception());
-      final currentStatus = OrderStatus.values.byName(currentOrder.status);
-
+      
       // Validate state transition
-      if (!_canTransition(currentStatus, newStatus)) {
-        return Left(ValidationFailure(
-          'Cannot transition from ${currentStatus.name} to ${newStatus.name}',
+      if (!currentOrder.canTransitionTo(newStatus)) {
+         return Left(ValidationFailure(
+          'Cannot transition from ${currentOrder.status.name} to ${newStatus.name}',
         ));
       }
 
@@ -257,12 +266,20 @@ class OrderRepository implements IOrderRepository {
         *,
         order_items!inner(
           id,
+          order_id,
           product_id,
           product_name,
           quantity,
           unit_price,
           total_price,
           seller_id
+        ),
+        order_status_history(
+          id,
+          order_id,
+          status,
+          note,
+          created_at
         )
       ''').eq('order_items.seller_id', sellerId).order(
         'created_at',
@@ -270,7 +287,7 @@ class OrderRepository implements IOrderRepository {
       );
 
       final orders = (response as List)
-          .map((json) => _parseOrder(json as Map<String, dynamic>))
+          .map((json) => Order.fromJson(json as Map<String, dynamic>))
           .toList();
 
       return Right(orders);
@@ -281,56 +298,89 @@ class OrderRepository implements IOrderRepository {
     }
   }
 
-  /// Order state machine transition validation
-  /// Requirements: 7.3, 7.4, 7.5, 7.6
-  bool _canTransition(OrderStatus from, OrderStatus to) {
-    const transitions = {
-      OrderStatus.pending: [OrderStatus.processing, OrderStatus.cancelled],
-      OrderStatus.processing: [OrderStatus.shipped, OrderStatus.cancelled],
-      OrderStatus.shipped: [OrderStatus.delivered],
-      OrderStatus.delivered: <OrderStatus>[],
-      OrderStatus.cancelled: <OrderStatus>[],
-    };
+  @override
+  Future<Either<Failure, SellerStats>> getSellerStats(String sellerId) async {
+    try {
+      // Get all orders for this seller
+      // Note: In a real app this should be optimized with a database view or function
+      final ordersResult = await getSellerOrders(sellerId);
+      
+      return ordersResult.fold(
+        (failure) => Left(failure),
+        (orders) {
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          
+          double totalSalesToday = 0;
+          int pendingOrdersCount = 0;
+          Map<String, int> productCounts = {};
+          Map<int, double>  weeklySalesMap = {}; // Key: day difference
 
-    return transitions[from]?.contains(to) ?? false;
-  }
+          // Initialize weekly sales map for last 7 days including today
+          for (int i = 0; i < 7; i++) {
+            weeklySalesMap[i] = 0;
+          }
 
-  /// Helper method to parse order data from JSON
-  Order _parseOrder(Map<String, dynamic> json) {
-    // Parse order items
-    final itemsData = json['order_items'] as List?;
-    final items = itemsData?.map((item) {
-      return OrderItem(
-        productId: item['product_id'] as String,
-        productName: item['product_name'] as String,
-        quantity: item['quantity'] as int,
-        price: (item['unit_price'] as num).toDouble(),
+          for (final order in orders) {
+            // Pending Orders
+            if (order.status == OrderStatus.pending) {
+              // We count the order as pending if ANY item belongs to seller
+              // A refinement would be ensuring the seller hasn't fulfilled their part
+              pendingOrdersCount++;
+            }
+
+            // Sales Calculations
+            // Since an order can have items from multiple sellers, we must sum only our items
+            double orderTotalForSeller = 0;
+            for (final item in order.items) {
+              if (item.sellerId == sellerId) {
+                // Count product popularity
+                productCounts[item.productName] = (productCounts[item.productName] ?? 0) + item.quantity;
+                orderTotalForSeller += item.totalPrice;
+              }
+            }
+            
+            // Stats based on created_at
+            final orderDate = order.createdAt;
+            final orderDay = DateTime(orderDate.year, orderDate.month, orderDate.day);
+            final differenceInDays = today.difference(orderDay).inDays;
+
+            if (differenceInDays == 0) {
+              totalSalesToday += orderTotalForSeller;
+            }
+
+            if (differenceInDays >= 0 && differenceInDays < 7) {
+              weeklySalesMap[differenceInDays] = (weeklySalesMap[differenceInDays] ?? 0) + orderTotalForSeller;
+            }
+          }
+
+          // Format Weekly Sales
+          List<SalesPoint> weeklySales = [];
+          for (int i = 6; i >= 0; i--) {
+             final date = today.subtract(Duration(days: i));
+             weeklySales.add(SalesPoint(date, weeklySalesMap[i] ?? 0));
+          }
+
+          // Top Products
+          final sortedProducts = productCounts.entries.toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
+          
+          final topProducts = sortedProducts
+              .take(5)
+              .map((e) => TopProduct(e.key, e.value))
+              .toList();
+
+          return Right(SellerStats(
+            totalSalesToday: totalSalesToday,
+            pendingOrdersCount: pendingOrdersCount,
+            weeklySales: weeklySales,
+            topProducts: topProducts,
+            recentOrders: orders.take(5).toList(),
+          ));
+        },
       );
-    }).toList() ?? [];
-
-    // Parse shipping info (for now using placeholder, would come from address table)
-    final shippingInfo = ShippingInfo(
-      name: '',
-      address: '',
-      phone: '',
-    );
-
-    // Parse payment info
-    final paymentInfo = PaymentInfo(
-      method: json['payment_method'] as String? ?? 'Cash on Delivery',
-      maskedNumber: '',
-    );
-
-    return Order(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      items: items,
-      subtotal: (json['subtotal'] as num).toDouble(),
-      total: (json['total'] as num).toDouble(),
-      status: json['status'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      shippingInfo: shippingInfo,
-      paymentInfo: paymentInfo,
-    );
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 }

@@ -9,6 +9,19 @@ import 'package:vendora/features/auth/data/repositories/auth_repository.dart';
 import 'package:vendora/core/services/cache_service.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart'
     as auth;
+import 'package:vendora/core/data/repositories/cart_repository.dart';
+import 'package:vendora/features/buyer/presentation/providers/cart_provider.dart';
+import 'package:vendora/core/data/repositories/product_repository.dart';
+import 'package:vendora/core/data/repositories/wishlist_repository.dart';
+import 'package:vendora/features/buyer/presentation/providers/wishlist_provider.dart';
+import 'package:vendora/core/data/repositories/review_repository.dart';
+import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';
+import 'package:vendora/core/data/repositories/notification_repository.dart';
+import 'package:vendora/features/common/presentation/providers/notification_provider.dart';
+import 'package:vendora/core/data/repositories/address_repository.dart';
+import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
+import 'package:vendora/core/data/repositories/order_repository.dart';
+import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,8 +34,15 @@ void main() async {
   final cacheService = CacheService();
   await cacheService.init();
 
-  // Create auth repository
+  // Create repositories
   final authRepository = AuthRepository(supabaseConfig);
+  final cartRepository = CartRepository(supabaseConfig: supabaseConfig);
+  final productRepository = ProductRepository(supabaseConfig: supabaseConfig, cacheService: cacheService);
+  final wishlistRepository = WishlistRepository(supabaseConfig: supabaseConfig);
+  final reviewRepository = ReviewRepository(supabaseConfig: supabaseConfig);
+  final notificationRepository = NotificationRepository(supabaseConfig: supabaseConfig);
+  final addressRepository = AddressRepository(supabaseConfig: supabaseConfig);
+  final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
 
   runApp(
     MultiProvider(
@@ -30,6 +50,30 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
           create: (_) => auth.AuthProvider(authRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CartProvider(cartRepository: cartRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WishlistProvider(
+            wishlistRepository: wishlistRepository,
+            productRepository: productRepository,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ReviewProvider(reviewRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(notificationRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AddressProvider(addressRepository: addressRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CheckoutProvider(
+            orderRepository: orderRepository,
+            cartRepository: cartRepository,
+          ),
         ),
       ],
       child: const VendoraApp(),

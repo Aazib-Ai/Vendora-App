@@ -230,56 +230,56 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
     - **Property 13: Out of Stock State**
     - **Validates: Requirements 16.1, 16.3**
 
-- [ ] 14. Shopping Cart
-  - [ ] 14.1 Redesign Cart Screen with new layout
+- [x] 14. Shopping Cart
+  - [x] 14.1 Redesign Cart Screen with new layout
     - Item cards with quantity controls
     - Order summary
     - Coupon code input
     - _Requirements: 6.4_
-  - [ ] 14.2 Connect cart to Supabase
+  - [x] 14.2 Connect cart to Supabase
     - Sync cart across devices
     - _Requirements: 6.1, 6.5_
-  - [ ] 14.3 Implement quantity update and remove
+  - [x] 14.3 Implement quantity update and remove
     - Update totals on change
     - _Requirements: 6.2, 6.3_
 
-- [ ] 15. Checkout & Orders
-  - [ ] 15.1 Redesign Checkout Screen
+- [x] 15. Checkout & Orders
+  - [x] 15.1 Redesign Checkout Screen
     - Address selection with map preview
     - Payment method selection
     - Order summary
     - _Requirements: 7.1, 22.8_
-  - [ ] 15.2 Implement Address Book
+  - [x] 15.2 Implement Address Book
     - List, add, edit, delete addresses
     - Set default address
     - _Requirements: 22.1, 22.3, 22.4, 22.5, 22.6, 22.7_
-  - [ ] 15.3 Implement OpenStreetMap location picker
+  - [x] 15.3 Implement OpenStreetMap location picker
     - Drag pin to select location
     - Store lat/lng coordinates
     - _Requirements: 22.1, 22.2, 22.3_
-  - [ ] 15.4 Implement order placement
+  - [x] 15.4 Implement order placement
     - Create order in Supabase
     - Clear cart after order
     - Decrement stock
     - _Requirements: 7.1, 7.2, 16.4_
-  - [ ] 15.5 Create Order Tracking Screen
+  - [x] 15.5 Create Order Tracking Screen
     - Visual timeline with status history
     - Tracking number display
     - _Requirements: 7.7, 7.10_
 
-- [ ] 16. Buyer Additional Features
-  - [ ] 16.1 Implement Wishlist functionality
+- [x] 16. Buyer Additional Features
+  - [x] 16.1 Implement Wishlist functionality
     - Add/remove from wishlist
     - Wishlist screen
     - _Requirements: 19.2, 19.3_
-  - [ ] 16.2 Implement Reviews system
+  - [x] 16.2 Implement Reviews system
     - Submit review after purchase
     - View product reviews
     - _Requirements: 19.5, 19.6, 19.7_
-  - [ ] 16.3 Write property test for review purchase verification
+  - [x] 16.3 Write property test for review purchase verification
     - **Property 10: Review Purchase Verification**
     - **Validates: Requirements 19.5, 19.6**
-  - [ ] 16.4 Implement Notifications screen
+  - [x] 16.4 Implement Notifications screen
     - Fetch and display notifications
     - Mark as read
     - Navigate on tap
@@ -293,14 +293,14 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
 ## Phase 6: Seller Features
 
 - [ ] 18. Seller Dashboard
-  - [ ] 18.1 Redesign Seller Dashboard with new layout
+  - [/] 18.1 Redesign Seller Dashboard with new layout
     - Today's overview stats
     - Action required alerts
     - Sales chart (7 days)
     - Top selling products
     - Recent orders
     - _Requirements: 15.1, 15.4_
-  - [ ] 18.2 Implement sales data fetching
+  - [/] 18.2 Implement sales data fetching
     - Aggregate sales by day
     - Calculate trends
     - _Requirements: 15.1, 15.2_

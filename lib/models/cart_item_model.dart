@@ -9,6 +9,7 @@ class CartItem extends Equatable {
   final int quantity;
   final double unitPrice;
   final String? imageUrl;
+  final String sellerId;
   final DateTime createdAt;
 
   const CartItem({
@@ -19,6 +20,7 @@ class CartItem extends Equatable {
     required this.quantity,
     required this.unitPrice,
     this.imageUrl,
+    required this.sellerId,
     required this.createdAt,
   });
 
@@ -26,6 +28,10 @@ class CartItem extends Equatable {
   double get total => quantity * unitPrice;
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    // Determine sellerId based on JSON structure complexity
+    final product = json['products'] as Map<String, dynamic>?;
+    final sellerId = product != null ? product['seller_id'] as String : json['seller_id'] as String? ?? '';
+
     return CartItem(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -34,6 +40,7 @@ class CartItem extends Equatable {
       quantity: json['quantity'] as int,
       unitPrice: (json['unit_price'] as num).toDouble(),
       imageUrl: json['image_url'] as String?,
+      sellerId: sellerId,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -47,6 +54,7 @@ class CartItem extends Equatable {
       'quantity': quantity,
       'unit_price': unitPrice,
       'image_url': imageUrl,
+      'seller_id': sellerId,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -59,6 +67,7 @@ class CartItem extends Equatable {
     int? quantity,
     double? unitPrice,
     String? imageUrl,
+    String? sellerId,
     DateTime? createdAt,
   }) {
     return CartItem(
@@ -69,6 +78,7 @@ class CartItem extends Equatable {
       quantity: quantity ?? this.quantity,
       unitPrice: unitPrice ?? this.unitPrice,
       imageUrl: imageUrl ?? this.imageUrl,
+      sellerId: sellerId ?? this.sellerId,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -82,6 +92,7 @@ class CartItem extends Equatable {
         quantity,
         unitPrice,
         imageUrl,
+        sellerId,
         createdAt,
       ];
 }

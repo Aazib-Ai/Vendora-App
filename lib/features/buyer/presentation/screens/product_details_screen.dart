@@ -4,6 +4,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vendora/models/product_model.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/services/cart_service.dart';
+import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';
+import 'package:vendora/features/buyer/presentation/screens/leave_review_screen.dart';
+import 'package:vendora/features/buyer/presentation/widgets/product_reviews_list.dart';
+import 'package:provider/provider.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart' as auth;
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product product;
@@ -96,7 +101,53 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           _buildDescription(),
                           const SizedBox(height: 24),
                           _buildSellerInfo(),
-                           const SizedBox(height: 100), // Spacing for bottom bar
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 16),
+                          const Text("Reviews", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
+                          // Review Button Check
+                          Consumer<ReviewProvider>(
+                            builder: (context, reviewProvider, _) {
+                              return FutureBuilder<String?>(
+                                future: () async {
+                                  final user = context.read<auth.AuthProvider>().currentUser;
+                                  if (user == null) return null;
+                                  return reviewProvider.getReviewableOrderId(user.id, widget.product.id);
+                                }(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData && snapshot.data != null) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 16.0),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => LeaveReviewScreen(
+                                                  product: widget.product,
+                                                  orderId: snapshot.data!,
+                                                ),
+                                              ),
+                                            ).then((_) {
+                                              // Refresh reviews after return
+                                              context.read<ReviewProvider>().loadProductReviews(widget.product.id);
+                                            });
+                                          },
+                                          child: const Text("Write a Review"),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              );
+                            },
+                          ),
+                          ProductReviewsList(productId: widget.product.id),
+                          const SizedBox(height: 100), // Spacing for bottom bar
                         ],
                       ),
                     ),
@@ -225,7 +276,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                    style: TextStyle(color: Colors.orange.shade800, fontSize: 12, fontWeight: FontWeight.bold),
                  ),
               ),
-            if (_isOutOfStock)
+        if (_isOutOfStock)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -237,6 +288,42 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                    style: TextStyle(color: Colors.red.shade800, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+               "Product Details", 
+               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+            ),
+             Consumer<WishlistProvider>(
+               builder: (context, wishlistProvider, _) {
+                 final isWishlisted = wishlistProvider.isInWishlist(widget.product.id);
+                 return IconButton(
+                   icon: Icon(
+                     isWishlisted ? Icons.favorite : Icons.favorite_border,
+                     color: isWishlisted ? Colors.red : Colors.grey,
+                     size: 28,
+                   ),
+                   onPressed: () {
+                      final user = context.read<auth.AuthProvider>().currentUser;
+                      if (user == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                           const SnackBar(content: Text('Please login to use wishlist')),
+                        );
+                        return;
+                      }
+                      if (isWishlisted) {
+                         wishlistProvider.removeFromWishlist(user.id, widget.product.id);
+                      } else {
+                         wishlistProvider.addToWishlist(user.id, widget.product);
+                      }
+                   },
+                 );
+               },
+             ),
           ],
         ),
       ],

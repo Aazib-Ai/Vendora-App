@@ -2,46 +2,26 @@ import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
-
-import 'package:vendora/models/cart_item_model.dart';
+import '../../../models/cart_item_model.dart';
 
 /// Abstract interface for cart operations
-/// Defines contract for cart repository implementations
 abstract class ICartRepository {
-  /// Get all cart items for a user
-  /// Requirements: 6.4
   Future<Either<Failure, List<CartItem>>> getCartItems(String userId);
-
-  /// Add a product to cart
-  /// Requirements: 6.1
   Future<Either<Failure, CartItem>> addCartItem({
     required String userId,
     required String productId,
     required int quantity,
   });
-
-  /// Update cart item quantity
-  /// Requirements: 6.2
   Future<Either<Failure, CartItem>> updateCartItem({
     required String cartItemId,
     required int quantity,
   });
-
-  /// Remove an item from cart
-  /// Requirements: 6.3
   Future<Either<Failure, void>> removeCartItem(String cartItemId);
-
-  /// Clear all cart items for a user
-  /// Requirements: 7.2
   Future<Either<Failure, void>> clearCart(String userId);
-
-  /// Calculate cart total
-  /// Requirements: 6.2
   Future<Either<Failure, double>> getCartTotal(String userId);
 }
 
 /// Concrete implementation of cart repository using Supabase
-/// Handles cart operations with product joins and total calculation
 class CartRepository implements ICartRepository {
   final SupabaseConfig _supabaseConfig;
 
@@ -60,6 +40,7 @@ class CartRepository implements ICartRepository {
         products!inner(
           name,
           base_price,
+          seller_id,
           product_images(url, is_primary)
         )
       ''').eq('user_id', userId);
@@ -71,16 +52,12 @@ class CartRepository implements ICartRepository {
             ? images!.first['url'] as String?
             : null;
 
-        return CartItem(
-          id: json['id'] as String,
-          userId: json['user_id'] as String,
-          productId: json['product_id'] as String,
-          productName: product['name'] as String,
-          quantity: json['quantity'] as int,
-          unitPrice: (product['base_price'] as num).toDouble(),
-          imageUrl: imageUrl,
-          createdAt: DateTime.parse(json['created_at'] as String),
-        );
+        // Note: seller_id is inside products, but CartItem.fromJson handles it cleanly usually
+        // But here we reconstruct manually to pass flat structure or pass proper JSON.
+        // Let's pass the fetched JSON to CartItem.fromJson.
+        // Wait, the JSON structure here is nested: { ..., products: { ... } }
+        // My updated CartItem.fromJson HANDLES this nested structure.
+        return CartItem.fromJson(json as Map<String, dynamic>);
       }).toList();
 
       return Right(items);
@@ -98,15 +75,13 @@ class CartRepository implements ICartRepository {
     required int quantity,
   }) async {
     try {
-      // Validate quantity
       if (quantity <= 0) {
         return const Left(ValidationFailure('Quantity must be greater than 0'));
       }
 
-      // Check if product exists and has sufficient stock
       final productResponse = await _supabaseConfig
           .from('products')
-          .select('name, base_price, stock_quantity')
+          .select('name, base_price, stock_quantity, seller_id')
           .eq('id', productId)
           .single();
 
@@ -114,8 +89,9 @@ class CartRepository implements ICartRepository {
       if (stockQuantity < quantity) {
         return const Left(ValidationFailure('Insufficient stock'));
       }
+      
+      final sellerId = productResponse['seller_id'] as String;
 
-      // Check if item already exists in cart
       final existingItems = await _supabaseConfig
           .from('cart_items')
           .select()
@@ -123,7 +99,6 @@ class CartRepository implements ICartRepository {
           .eq('product_id', productId);
 
       if (existingItems.isNotEmpty) {
-        // Update existing item
         final existingItem = existingItems.first;
         final newQuantity = (existingItem['quantity'] as int) + quantity;
         
@@ -133,7 +108,6 @@ class CartRepository implements ICartRepository {
         );
       }
 
-      // Create new cart item
       final cartItemData = {
         'user_id': userId,
         'product_id': productId,
@@ -154,6 +128,7 @@ class CartRepository implements ICartRepository {
         productName: productResponse['name'] as String,
         quantity: quantity,
         unitPrice: (productResponse['base_price'] as num).toDouble(),
+        sellerId: sellerId,
         createdAt: DateTime.parse(response['created_at'] as String),
       );
 
@@ -174,12 +149,10 @@ class CartRepository implements ICartRepository {
     required int quantity,
   }) async {
     try {
-      // Validate quantity
       if (quantity <= 0) {
         return const Left(ValidationFailure('Quantity must be greater than 0'));
       }
 
-      // Fetch cart item to get product ID
       final cartItem = await _supabaseConfig
           .from('cart_items')
           .select('product_id')
@@ -188,10 +161,9 @@ class CartRepository implements ICartRepository {
 
       final productId = cartItem['product_id'] as String;
 
-      // Check product stock
       final productResponse = await _supabaseConfig
           .from('products')
-          .select('name, base_price, stock_quantity')
+          .select('name, base_price, stock_quantity, seller_id')
           .eq('id', productId)
           .single();
 
@@ -200,7 +172,6 @@ class CartRepository implements ICartRepository {
         return const Left(ValidationFailure('Insufficient stock'));
       }
 
-      // Update cart item
       final response = await _supabaseConfig
           .from('cart_items')
           .update({'quantity': quantity})
@@ -215,6 +186,7 @@ class CartRepository implements ICartRepository {
         productName: productResponse['name'] as String,
         quantity: quantity,
         unitPrice: (productResponse['base_price'] as num).toDouble(),
+        sellerId: productResponse['seller_id'] as String,
         createdAt: DateTime.parse(response['created_at'] as String),
       );
 
@@ -257,7 +229,6 @@ class CartRepository implements ICartRepository {
   Future<Either<Failure, double>> getCartTotal(String userId) async {
     try {
       final itemsResult = await getCartItems(userId);
-      
       return itemsResult.fold(
         (failure) => Left(failure),
         (items) {
