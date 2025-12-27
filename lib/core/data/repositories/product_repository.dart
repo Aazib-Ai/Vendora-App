@@ -92,7 +92,7 @@ class ProductRepository implements IProductRepository {
       final offset = (page - 1) * limit;
 
       // Build query
-      var query = _supabaseConfig.from('products').select('''
+      dynamic query = _supabaseConfig.from('products').select('''
         *,
         product_images(url, is_primary, display_order),
         product_variants(id, sku, size, color, material, price, stock_quantity)

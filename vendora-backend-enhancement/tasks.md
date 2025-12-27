@@ -139,23 +139,23 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
 
 ## Phase 4: Frontend Core Components
 
-- [ ] 9. Design System Implementation
-  - [ ] 9.1 Create AppColors and AppTypography classes
+- [x] 9. Design System Implementation
+  - [x] 9.1 Create AppColors and AppTypography classes
     - Implement color palette from design spec
     - Create typography scale
     - _Requirements: 10.1_
-  - [ ] 9.2 Create reusable UI components
+  - [x] 9.2 Create reusable UI components
     - SkeletonLoader for loading states
     - ErrorStateWidget with retry
     - AnimatedButton with haptic feedback
     - _Requirements: 10.1, 10.2, 10.7_
-  - [ ] 9.3 Create ProductCard component
+  - [x] 9.3 Create ProductCard component
     - Implement with badges, wishlist, quick-add
     - _Requirements: 10.4_
-  - [ ] 9.4 Create StatsCard component for dashboards
+  - [x] 9.4 Create StatsCard component for dashboards
     - Show value, trend, icon
     - _Requirements: 15.1_
-  - [ ] 9.5 Implement page transitions and animations
+  - [x] 9.5 Implement page transitions and animations
     - SlidePageRoute for navigation
     - Add-to-cart flying animation
     - _Requirements: 10.3_
@@ -178,54 +178,54 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
 
 ## Phase 5: Buyer Features
 
-- [ ] 12. Buyer Home Screen
-  - [ ] 12.1 Redesign Home Screen with new layout
+- [x] 12. Buyer Home Screen
+  - [x] 12.1 Redesign Home Screen with new layout
     - Add hero banner carousel
     - Add category quick access
     - Add flash deals section with countdown
     - _Requirements: 5.1, 10.1_
-  - [ ] 12.2 Implement product fetching with pagination
+  - [x] 12.2 Implement product fetching with pagination
     - Connect to ProductRepository
     - Add pull-to-refresh
     - Add infinite scroll
     - _Requirements: 5.1, 10.5_
-  - [ ] 12.3 Implement search functionality
+  - [x] 12.3 Implement search functionality
     - Full-text search with Supabase
     - Debounced input
     - _Requirements: 5.2_
-  - [ ] 12.4 Implement category filtering
+  - [x] 12.4 Implement category filtering
     - Filter products by category
     - _Requirements: 5.3_
-  - [ ] 12.5 Write property test for category filter
+  - [x] 12.5 Write property test for category filter
     - **Property 5: Category Filter Correctness**
     - **Validates: Requirements 5.3**
-  - [ ] 12.6 Implement sorting options
+  - [x] 12.6 Implement sorting options
     - Sort by price, rating, newest
     - _Requirements: 5.4_
-  - [ ] 12.7 Write property test for sort order
+  - [x] 12.7 Write property test for sort order
     - **Property 6: Product Sort Order Correctness**
     - **Validates: Requirements 5.4**
 
 - [ ] 13. Product Details Screen
-  - [ ] 13.1 Redesign Product Details with new layout
+  - [x] 13.1 Redesign Product Details with new layout
     - Image gallery with pinch-to-zoom
     - Variant selectors (size, color)
     - Trust badges
     - _Requirements: 5.5, 10.4, 23.3, 23.4_
-  - [ ] 13.2 Implement variant selection logic
+  - [x] 13.2 Implement variant selection logic
     - Update price and stock on variant change
     - Disable out-of-stock variants
     - _Requirements: 23.4, 23.7_
-  - [ ] 13.3 Write property test for variant stock independence
+  - [x] 13.3 Write property test for variant stock independence
     - **Property 18: Variant Stock Independence**
     - **Validates: Requirements 23.2, 23.6, 23.7**
-  - [ ] 13.4 Add WhatsApp contact button
+  - [x] 13.4 Add WhatsApp contact button
     - Open WhatsApp with seller number
     - _Requirements: 20.3, 20.8_
-  - [ ] 13.5 Implement low stock and out of stock indicators
+  - [x] 13.5 Implement low stock and out of stock indicators
     - Show badges based on quantity
     - _Requirements: 16.1, 16.3_
-  - [ ] 13.6 Write property test for stock indicators
+  - [x] 13.6 Write property test for stock indicators
     - **Property 12: Low Stock Badge Display**
     - **Property 13: Out of Stock State**
     - **Validates: Requirements 16.1, 16.3**

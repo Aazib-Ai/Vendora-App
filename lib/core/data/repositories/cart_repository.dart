@@ -3,56 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
 
-/// Cart item entity
-class CartItem {
-  final String id;
-  final String userId;
-  final String productId;
-  final String productName;
-  final int quantity;
-  final double unitPrice;
-  final String? imageUrl;
-  final DateTime createdAt;
-
-  const CartItem({
-    required this.id,
-    required this.userId,
-    required this.productId,
-    required this.productName,
-    required this.quantity,
-    required this.unitPrice,
-    this.imageUrl,
-    required this.createdAt,
-  });
-
-  double get total => quantity * unitPrice;
-
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      productId: json['product_id'] as String,
-      productName: json['product_name'] as String,
-      quantity: json['quantity'] as int,
-      unitPrice: (json['unit_price'] as num).toDouble(),
-      imageUrl: json['image_url'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'user_id': userId,
-      'product_id': productId,
-      'product_name': productName,
-      'quantity': quantity,
-      'unit_price': unitPrice,
-      'image_url': imageUrl,
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
-}
+import 'package:vendora/models/cart_item_model.dart';
 
 /// Abstract interface for cart operations
 /// Defines contract for cart repository implementations

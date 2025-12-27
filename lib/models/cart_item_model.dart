@@ -1,0 +1,87 @@
+import 'package:equatable/equatable.dart';
+
+/// Cart item entity representing a product in the user's cart
+class CartItem extends Equatable {
+  final String id;
+  final String userId;
+  final String productId;
+  final String productName;
+  final int quantity;
+  final double unitPrice;
+  final String? imageUrl;
+  final DateTime createdAt;
+
+  const CartItem({
+    required this.id,
+    required this.userId,
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.unitPrice,
+    this.imageUrl,
+    required this.createdAt,
+  });
+
+  /// Calculate total price for this item (quantity * unitPrice)
+  double get total => quantity * unitPrice;
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      productId: json['product_id'] as String,
+      productName: json['product_name'] as String,
+      quantity: json['quantity'] as int,
+      unitPrice: (json['unit_price'] as num).toDouble(),
+      imageUrl: json['image_url'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'product_id': productId,
+      'product_name': productName,
+      'quantity': quantity,
+      'unit_price': unitPrice,
+      'image_url': imageUrl,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
+  CartItem copyWith({
+    String? id,
+    String? userId,
+    String? productId,
+    String? productName,
+    int? quantity,
+    double? unitPrice,
+    String? imageUrl,
+    DateTime? createdAt,
+  }) {
+    return CartItem(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      quantity: quantity ?? this.quantity,
+      unitPrice: unitPrice ?? this.unitPrice,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        productId,
+        productName,
+        quantity,
+        unitPrice,
+        imageUrl,
+        createdAt,
+      ];
+}
