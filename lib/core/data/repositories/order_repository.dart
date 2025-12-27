@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart' hide Order;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
+import '../../services/notification_service.dart';
 import '../../../../models/order.dart';
 import '../../../../features/seller/data/models/seller_stats.dart';
 
@@ -46,9 +47,13 @@ abstract class IOrderRepository {
 /// Handles order creation with stock decrement and status updates
 class OrderRepository implements IOrderRepository {
   final SupabaseConfig _supabaseConfig;
+  final NotificationService? _notificationService;
 
-  OrderRepository({SupabaseConfig? supabaseConfig})
-      : _supabaseConfig = supabaseConfig ?? SupabaseConfig();
+  OrderRepository({
+    SupabaseConfig? supabaseConfig,
+    NotificationService? notificationService,
+  })  : _supabaseConfig = supabaseConfig ?? SupabaseConfig(),
+        _notificationService = notificationService;
 
   @override
   Future<Either<Failure, Order>> createOrder({
@@ -247,6 +252,16 @@ class OrderRepository implements IOrderRepository {
         'note': 'Status updated to ${newStatus.name}',
         'created_at': DateTime.now().toIso8601String(),
       });
+
+      // Send notification to buyer about status change
+      // Requirements: 7.9, 14.1
+      if (_notificationService != null) {
+        await _notificationService.notifyOrderStatusChange(
+          userId: currentOrder.userId,
+          orderId: orderId,
+          newStatus: newStatus,
+        );
+      }
 
       // Fetch updated order
       final updatedOrder = await getOrderById(orderId);

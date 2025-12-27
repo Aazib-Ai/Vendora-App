@@ -84,7 +84,7 @@ class _SellerKYCScreenState extends State<SellerKYCScreen> {
                       children: [
                         Icon(Icons.check_circle_outline, size: 64, color: AppColors.success),
                         const SizedBox(height: 16),
-                        Text(
+                        const Text(
                           'No sellers to review',
                           style: AppTypography.headingMedium,
                         ),

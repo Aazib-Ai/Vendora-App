@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vendora/core/errors/failures.dart';
 import 'package:vendora/core/config/supabase_config.dart';
+import 'package:vendora/core/services/notification_service.dart';
 import 'package:vendora/models/seller_model.dart';
 import 'package:vendora/core/utils/commission_calculator.dart';
 
@@ -16,9 +17,13 @@ abstract class ISellerRepository {
 
 class SellerRepository implements ISellerRepository {
   final SupabaseConfig _supabaseConfig;
+  final NotificationService? _notificationService;
 
-  SellerRepository({SupabaseConfig? supabaseConfig})
-      : _supabaseConfig = supabaseConfig ?? SupabaseConfig();
+  SellerRepository({
+    SupabaseConfig? supabaseConfig,
+    NotificationService? notificationService,
+  })  : _supabaseConfig = supabaseConfig ?? SupabaseConfig(),
+        _notificationService = notificationService;
 
   @override
   Future<Either<Failure, Seller?>> getCurrentSeller(String userId) async {
@@ -206,12 +211,26 @@ class SellerRepository implements ISellerRepository {
   @override
   Future<Either<Failure, void>> approveSeller(String sellerId) async {
     try {
+      // Fetch seller to get user_id
+      final sellerResponse = await _supabaseConfig.client
+          .from('sellers')
+          .select('user_id')
+          .eq('id', sellerId)
+          .single();
+      
+      final userId = sellerResponse['user_id'] as String;
+      
+      // Update seller status
       await _supabaseConfig.client
           .from('sellers')
           .update({'status': 'Active'})
           .eq('id', sellerId);
       
-      // TODO: Send approval notification
+      // Send approval notification
+      if (_notificationService != null) {
+        await _notificationService.notifySellerApproval(userId: userId);
+      }
+      
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -221,12 +240,29 @@ class SellerRepository implements ISellerRepository {
   @override
   Future<Either<Failure, void>> rejectSeller(String sellerId, String reason) async {
     try {
+      // Fetch seller to get user_id
+      final sellerResponse = await _supabaseConfig.client
+          .from('sellers')
+          .select('user_id')
+          .eq('id', sellerId)
+          .single();
+      
+      final userId = sellerResponse['user_id'] as String;
+      
+      // Update seller status
       await _supabaseConfig.client
           .from('sellers')
           .update({'status': 'Rejected'}) // We can't easily store reason without a schema change if columns don't exist
           .eq('id', sellerId);
 
-      // TODO: Send rejection notification with reason
+      // Send rejection notification with reason
+      if (_notificationService != null) {
+        await _notificationService.notifySellerRejection(
+          userId: userId,
+          reason: reason,
+        );
+      }
+      
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
