@@ -160,13 +160,13 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
     - Add-to-cart flying animation
     - _Requirements: 10.3_
 
-- [ ] 10. Real-time Subscriptions
-  - [ ] 10.1 Create RealtimeManager service
+- [x] 10. Real-time Subscriptions
+  - [x] 10.1 Create RealtimeManager service
     - Subscribe to order updates
     - Subscribe to product updates
     - Handle reconnection
     - _Requirements: 9.1, 9.2, 9.3_
-  - [ ] 10.2 Implement offline detection and caching
+  - [x] 10.2 Implement offline detection and caching
     - Use connectivity_plus for network status
     - Cache products locally with Hive
     - _Requirements: 9.4, 12.1, 12.2, 12.3_

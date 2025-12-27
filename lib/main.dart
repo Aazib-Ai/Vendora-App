@@ -6,6 +6,7 @@ import 'package:vendora/core/theme/app_theme.dart';
 import 'package:vendora/core/theme/theme_provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/features/auth/data/repositories/auth_repository.dart';
+import 'package:vendora/core/services/cache_service.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart'
     as auth;
 
@@ -15,6 +16,10 @@ void main() async {
   // Initialize Supabase
   final supabaseConfig = SupabaseConfig();
   await supabaseConfig.initialize();
+
+  // Initialize Cache Service
+  final cacheService = CacheService();
+  await cacheService.init();
 
   // Create auth repository
   final authRepository = AuthRepository(supabaseConfig);

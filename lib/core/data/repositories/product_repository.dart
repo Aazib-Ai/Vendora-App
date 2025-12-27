@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
+import '../../services/cache_service.dart';
 import '../../../models/product_model.dart';
 
 /// Product sort options for querying
@@ -53,9 +54,13 @@ abstract class IProductRepository {
 /// Handles CRUD operations with pagination, search, and filtering
 class ProductRepository implements IProductRepository {
   final SupabaseConfig _supabaseConfig;
+  final CacheService _cacheService;
 
-  ProductRepository({SupabaseConfig? supabaseConfig})
-      : _supabaseConfig = supabaseConfig ?? SupabaseConfig();
+  ProductRepository({
+    SupabaseConfig? supabaseConfig,
+    CacheService? cacheService,
+  })  : _supabaseConfig = supabaseConfig ?? SupabaseConfig(),
+        _cacheService = cacheService ?? CacheService();
 
   @override
   Future<Either<Failure, List<Product>>> getProducts({
@@ -66,6 +71,23 @@ class ProductRepository implements IProductRepository {
     ProductSortOption? sortBy,
   }) async {
     try {
+      // Check offline status first
+      if (await _cacheService.isOffline()) {
+        final cachedData = _cacheService.getCachedProducts();
+        if (cachedData.isNotEmpty) {
+          final products = cachedData
+              .map((json) => _parseProduct(json))
+              .toList();
+              
+          // Basic filtering on cached data if needed
+          if (category != null && category.isNotEmpty) {
+             // In a real app, we'd implement full local filtering.
+             // For now, return what we have if offline.
+          }
+          return Right(products);
+        }
+      }
+
       // Calculate pagination offset
       final offset = (page - 1) * limit;
 
@@ -111,6 +133,12 @@ class ProductRepository implements IProductRepository {
       query = query.range(offset, offset + limit - 1);
 
       final response = await query;
+      
+      // Cache the results (simple strategy: cache everything fetched)
+      // In production, we might only cache the first page or specific categories.
+      if (response != null && response is List && response.isNotEmpty) {
+        await _cacheService.cacheProducts(List<Map<String, dynamic>>.from(response));
+      }
 
       final products = (response as List)
           .map((json) => _parseProduct(json as Map<String, dynamic>))
@@ -120,6 +148,17 @@ class ProductRepository implements IProductRepository {
     } on PostgrestException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
+      // Fallback to cache on error
+      try {
+         final cachedData = _cacheService.getCachedProducts();
+         if (cachedData.isNotEmpty) {
+            final products = cachedData
+                .map((json) => _parseProduct(json))
+                .toList();
+            return Right(products);
+         }
+      } catch (_) {}
+      
       return Left(ServerFailure(e.toString()));
     }
   }
