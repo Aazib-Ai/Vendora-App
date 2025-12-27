@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/core/widgets/vendora_logo.dart';
 import 'package:vendora/core/widgets/custom_text_field.dart';
 import 'package:vendora/core/widgets/custom_button.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,33 +17,49 @@ class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _isLoading = false;
+  
+  String _selectedRole = 'buyer'; // default to buyer
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleSignup() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      // Simulate signup
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
-        }
-      });
+  Future<void> _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.signUp(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      role: _selectedRole,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      // Navigate based on user role
+      final route = authProvider.getHomeRouteForRole();
+      Navigator.pushReplacementNamed(context, route);
+    } else {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Sign up failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -100,6 +118,61 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                
+                // ROLE SELECTION
+                const Text(
+                  'I want to:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Buy Products'),
+                        selected: _selectedRole == 'buyer',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedRole = 'buyer');
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('Sell Products'),
+                        selected: _selectedRole == 'seller',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedRole = 'seller');
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // PHONE NUMBER
+                CustomTextField(
+                  controller: _phoneController,
+                  hintText: 'Phone Number',
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your phone number';
+                    }
+                    if (value.length < 10) {
+                      return 'Please enter a valid phone number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
                 CustomTextField(
                   controller: _passwordController,
                   hintText: 'Password',
@@ -130,10 +203,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 32),
-                CustomButton(
-                  text: 'Sign Up',
-                  onPressed: _handleSignup,
-                  isLoading: _isLoading,
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return CustomButton(
+                      text: 'Sign Up',
+                      onPressed: _handleSignup,
+                      isLoading: authProvider.isLoading,
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 Row(

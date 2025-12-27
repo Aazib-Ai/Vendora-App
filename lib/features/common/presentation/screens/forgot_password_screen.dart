@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/core/widgets/vendora_logo.dart';
 import 'package:vendora/core/widgets/custom_text_field.dart';
 import 'package:vendora/core/widgets/custom_button.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -14,7 +16,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,20 +23,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _handleSendLink() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      // Simulate sending reset link
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          Navigator.pushNamed(context, AppRoutes.resetPassword);
-        }
-      });
+  Future<void> _handleSendLink() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.resetPassword(
+      _emailController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset link sent! Check your email.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Navigate back to login after showing success
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Failed to send reset link'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -87,10 +104,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 32),
-                CustomButton(
-                  text: 'Send Link',
-                  onPressed: _handleSendLink,
-                  isLoading: _isLoading,
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return CustomButton(
+                      text: 'Send Link',
+                      onPressed: _handleSendLink,
+                      isLoading: authProvider.isLoading,
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 TextButton(

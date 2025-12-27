@@ -33,6 +33,7 @@ import 'package:vendora/features/seller/presentation/screens/orders_screen.dart'
 import 'package:vendora/features/seller/presentation/screens/sales_screen.dart';
 import 'package:vendora/features/seller/presentation/screens/notifications_screen.dart';
 import 'package:vendora/features/seller/presentation/screens/stats_screen.dart';
+import 'package:vendora/features/seller/screens/seller_pending_screen.dart';
 
 // ADMIN
 import 'package:vendora/features/admin/presentation/screens/admin_dashboard_screen.dart';
@@ -79,6 +80,7 @@ class AppRoutes {
   static const String sales = '/seller/sales';
   static const String sellerNotifications = '/seller/notifications';
   static const String stats = '/seller/stats';
+  static const String sellerPending = '/seller-pending';
 
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
@@ -151,6 +153,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SellerNotificationsScreen());
       case stats:
         return MaterialPageRoute(builder: (_) => const StatsScreen());
+      case sellerPending:
+        return MaterialPageRoute(builder: (_) => const SellerPendingScreen());
 
     // ADMIN
       case adminDashboard:

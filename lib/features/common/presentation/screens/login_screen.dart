@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/core/widgets/custom_text_field.dart';
 import 'package:vendora/core/widgets/custom_button.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,19 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isLoading = false;
-  String _userRole = "buyer"; // default role
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String) {
-      _userRole = args;
-    }
-    debugPrint("LOGIN SCREEN ROLE: $_userRole");
-  }
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -35,26 +24,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
+    final authProvider = context.read<AuthProvider>();
+    
+    final success = await authProvider.signIn(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
 
-        debugPrint("LOGIN ROLE USED: $_userRole");
+    if (!mounted) return;
 
-        if (_userRole == "buyer") {
-          Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
-        } else if (_userRole == "seller") {
-          Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
-        } else if (_userRole == "admin") {
-          Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
-        }
-      });
+    if (success) {
+      // Navigate based on user role
+      final route = authProvider.getHomeRouteForRole();
+      Navigator.pushReplacementNamed(context, route);
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Login failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -152,10 +145,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 28),
 
                 // LOGIN BUTTON
-                CustomButton(
-                  text: 'Login',
-                  onPressed: _handleLogin,
-                  isLoading: _isLoading,
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return CustomButton(
+                      text: 'Login',
+                      onPressed: _handleLogin,
+                      isLoading: authProvider.isLoading,
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 22),

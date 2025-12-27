@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 /// Base exception class for the application
 abstract class AppException implements Exception {
   final String message;

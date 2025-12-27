@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/core/widgets/vendora_logo.dart';
 import 'package:vendora/core/widgets/custom_text_field.dart';
 import 'package:vendora/core/widgets/custom_button.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -15,7 +17,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,20 +25,36 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void _handleUpdatePassword() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      // Simulate password update
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          Navigator.pushReplacementNamed(context, AppRoutes.login);
-        }
-      });
+  Future<void> _handleUpdatePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final success = await authProvider.updatePassword(
+      _newPasswordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password updated successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Navigate to login
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Failed to update password'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -104,10 +121,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 40),
-                CustomButton(
-                  text: 'Update Password',
-                  onPressed: _handleUpdatePassword,
-                  isLoading: _isLoading,
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return CustomButton(
+                      text: 'Update Password',
+                      onPressed: _handleUpdatePassword,
+                      isLoading: authProvider.isLoading,
+                    );
+                  },
                 ),
               ],
             ),

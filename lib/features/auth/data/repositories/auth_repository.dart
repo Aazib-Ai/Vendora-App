@@ -1,0 +1,284 @@
+import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:vendora/core/config/supabase_config.dart';
+import 'package:vendora/core/errors/failures.dart';
+import 'package:vendora/core/errors/exceptions.dart';
+import 'package:vendora/models/user_model.dart' as app_models;
+
+/// Authentication repository handling all auth operations with Supabase
+/// Implements Requirements 2.1-2.8
+class AuthRepository {
+  final SupabaseConfig _supabaseConfig;
+
+  AuthRepository(this._supabaseConfig);
+
+  /// Sign up a new user with email, password, and role
+  /// For sellers, creates entry in sellers table with status 'unverified'
+  /// Validates: Requirements 2.1, 2.2, 2.8
+  Future<Either<Failure, app_models.User>> signUp({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+    required String role, // 'buyer' or 'seller'
+  }) async {
+    try {
+      // 1. Create auth user in Supabase Auth
+      final authResponse = await _supabaseConfig.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (authResponse.user == null) {
+        return const Left(
+          AuthFailure('Failed to create account', AuthErrorType.signUpFailed),
+        );
+      }
+
+      final userId = authResponse.user!.id;
+
+      // 2. Create user profile in users table
+      await _supabaseConfig.from('users').insert({
+        'id': userId,
+        'email': email,
+        'name': name,
+        'phone': phone,
+        'role': role,
+        'is_active': true,
+      });
+
+      // 3. If seller, create seller profile with 'unverified' status
+      if (role == 'seller') {
+        await _supabaseConfig.from('sellers').insert({
+          'user_id': userId,
+          'business_name': name, // Use name as initial business name
+          'status': 'unverified', // Requirement 2.8, 18.1
+          'total_sales': 0,
+          'wallet_balance': 0,
+        });
+      }
+
+      // 4. Return user model
+      final user = app_models.User(
+        id: userId,
+        name: name,
+        email: email,
+        phone: phone,
+        role: role,
+      );
+
+      if (kDebugMode) {
+        print('✓ User signed up successfully: $email (role: $role)');
+      }
+
+      return Right(user);
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign up auth error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } on PostgrestException catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign up database error: ${e.message}');
+      }
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign up error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Sign in existing user with email and password
+  /// Validates: Requirements 2.3, 2.4
+  Future<Either<Failure, app_models.User>> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // 1. Authenticate with Supabase
+      final authResponse = await _supabaseConfig.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (authResponse.user == null) {
+        return const Left(
+          AuthFailure('Invalid credentials', AuthErrorType.invalidCredentials),
+        );
+      }
+
+      // 2. Get user profile from database
+      final user = await getCurrentUser();
+      
+      if (kDebugMode) {
+        print('✓ User signed in successfully: $email');
+      }
+
+      return user;
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign in error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign in error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Sign out current user
+  /// Validates: Requirement 2.6
+  Future<Either<Failure, void>> signOut() async {
+    try {
+      await _supabaseConfig.auth.signOut();
+      
+      if (kDebugMode) {
+        print('✓ User signed out successfully');
+      }
+      
+      return const Right(null);
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign out error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Sign out error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Send password reset email
+  /// Validates: Requirement 2.5
+  Future<Either<Failure, void>> resetPassword(String email) async {
+    try {
+      await _supabaseConfig.auth.resetPasswordForEmail(email);
+      
+      if (kDebugMode) {
+        print('✓ Password reset email sent to: $email');
+      }
+      
+      return const Right(null);
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Password reset error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Password reset error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Update user password (after reset)
+  /// Validates: Requirement 2.5
+  Future<Either<Failure, void>> updatePassword(String newPassword) async {
+    try {
+      await _supabaseConfig.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+      
+      if (kDebugMode) {
+        print('✓ Password updated successfully');
+      }
+      
+      return const Right(null);
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Update password error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Update password error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Get current authenticated user with profile data
+  /// Returns null if no user is authenticated
+  /// Validates: Requirement 2.7
+  Future<Either<Failure, app_models.User?>> getCurrentUser() async {
+    try {
+      final authUser = _supabaseConfig.auth.currentUser;
+      
+      if (authUser == null) {
+        return const Right(null);
+      }
+
+      // Fetch user profile from database
+      final response = await _supabaseConfig
+          .from('users')
+          .select()
+          .eq('id', authUser.id)
+          .single();
+
+      final user = app_models.User(
+        id: response['id'] as String,
+        name: response['name'] as String,
+        email: response['email'] as String,
+        phone: response['phone'] as String,
+        role: response['role'] as String,
+        address: response['address'] as String?,
+        profileImageUrl: response['profile_image_url'] as String?,
+      );
+
+      return Right(user);
+    } on PostgrestException catch (e) {
+      if (kDebugMode) {
+        print('✗ Get current user error: ${e.message}');
+      }
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Get current user error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Get seller status for current user (if they are a seller)
+  /// Returns seller status: 'unverified', 'active', or 'rejected'
+  /// Validates: Requirements 18.1, 18.2
+  Future<Either<Failure, String?>> getSellerStatus(String userId) async {
+    try {
+      final response = await _supabaseConfig
+          .from('sellers')
+          .select('status')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (response == null) {
+        return const Right(null); // Not a seller
+      }
+
+      return Right(response['status'] as String);
+    } on PostgrestException catch (e) {
+      if (kDebugMode) {
+        print('✗ Get seller status error: ${e.message}');
+      }
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Get seller status error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Listen to auth state changes
+  /// Used for auto-login and session management
+  Stream<AuthState> get authStateChanges {
+    return _supabaseConfig.auth.onAuthStateChange;
+  }
+}
