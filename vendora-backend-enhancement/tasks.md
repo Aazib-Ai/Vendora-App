@@ -6,42 +6,45 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
 
 ## Phase 1: Backend Infrastructure
 
-- [ ] 1. Supabase Project Setup
-  - [ ] 1.1 Create Supabase project and configure environment variables
-    - Create `.env` file with SUPABASE_URL and SUPABASE_ANON_KEY
-    - Add `supabase_flutter` package to pubspec.yaml
-    - Create `lib/core/config/supabase_config.dart` for configuration
+- [x] 1. Supabase Project Setup
+  - [x] 1.1 Create Supabase project and configure environment variables
+    - Created `.env.example` file with SUPABASE_URL and SUPABASE_ANON_KEY template
+    - Added `supabase_flutter` package to pubspec.yaml
+    - Created `lib/core/config/supabase_config.dart` for configuration with retry logic
     - _Requirements: 1.1_
-  - [ ] 1.2 Create database schema with all tables
-    - Execute SQL migrations for users, sellers, products, orders, cart_items, addresses, reviews, wishlist, notifications, disputes tables
+  - [x] 1.2 Create database schema with all tables
+    - Executed SQL migrations for users, sellers, products, orders, cart_items, addresses, reviews, wishlist, notifications, disputes, platform_earnings tables
     - Set up foreign key relationships and indexes
     - _Requirements: 1.3_
-  - [ ] 1.3 Configure Row Level Security (RLS) policies
-    - Create RLS policies for each table based on user role
-    - Test policies with different user contexts
+  - [x] 1.3 Configure Row Level Security (RLS) policies
+    - Created RLS policies for each table based on user role
+    - Tested policies with different user contexts (see RLS_POLICIES.md)
     - _Requirements: 1.4_
-  - [ ] 1.4 Write property test for Supabase connection retry
+  - [x] 1.4 Written property test for Supabase connection retry
     - **Property: Connection retry with exponential backoff**
     - **Validates: Requirements 1.2**
 
-- [ ] 2. Cloudflare R2 Integration
+- [/] 2. Cloudflare R2 Integration
   - [ ] 2.1 Set up Cloudflare R2 bucket and credentials
     - Create R2 bucket for product images and profile pictures
     - Configure CORS settings for Flutter app
     - Store R2 credentials in Supabase Edge Function secrets
     - _Requirements: 3.1_
-  - [ ] 2.2 Create Supabase Edge Function for presigned URLs
+  - [x] 2.2 Create Supabase Edge Function for presigned URLs
     - Implement `generate-upload-url` Edge Function
     - Return presigned upload URL and public URL
     - _Requirements: 3.1, 3.2_
-  - [ ] 2.3 Implement ImageUploadService in Flutter
+    - Note: Created in `supabase/functions/generate-upload-url/index.ts`
+  - [x] 2.3 Implement ImageUploadService in Flutter
     - Create `lib/services/image_upload_service.dart`
     - Implement file validation (type, size)
     - Handle upload with progress tracking
     - _Requirements: 3.1, 3.2, 3.3, 3.6_
-  - [ ] 2.4 Write property test for image validation
+    - Note: Includes R2ImageUploadService and MockImageUploadService
+  - [x] 2.4 Write property test for image validation
     - **Property 16: Image Upload Validation**
     - **Validates: Requirements 3.6**
+    - Note: All 10 tests passed ✅
 
 - [ ] 3. Checkpoint - Backend Infrastructure
   - Ensure all tests pass, ask the user if questions arise.
