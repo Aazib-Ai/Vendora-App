@@ -10,7 +10,7 @@ import 'package:vendora/core/services/cache_service.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart'
     as auth;
 import 'package:vendora/core/data/repositories/cart_repository.dart';
-import 'package:vendora/features/buyer/presentation/providers/cart_provider.dart';
+import 'package:vendora/features/cart/presentation/providers/cart_provider.dart';
 import 'package:vendora/core/data/repositories/product_repository.dart';
 import 'package:vendora/core/data/repositories/wishlist_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/wishlist_provider.dart';
@@ -24,7 +24,7 @@ import 'package:vendora/core/data/repositories/address_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
 import 'package:vendora/core/data/repositories/order_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
-import 'package:vendora/core/data/repositories/admin_repository_impl.dart';
+import 'package:vendora/features/admin/data/repositories/admin_repository_impl.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_dashboard_provider.dart';
 
 void main() async {
@@ -48,7 +48,7 @@ void main() async {
   final addressRepository = AddressRepository(supabaseConfig: supabaseConfig);
   final sellerRepository = SellerRepository(supabaseConfig: supabaseConfig);
   final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
-  final adminRepository = AdminRepositoryImpl(supabaseConfig.client);
+  final adminRepository = AdminRepositoryImpl(supabaseConfig: supabaseConfig);
 
   runApp(
     MultiProvider(
@@ -58,7 +58,7 @@ void main() async {
           create: (_) => auth.AuthProvider(authRepository),
         ),
         ChangeNotifierProvider(
-          create: (_) => CartProvider(cartRepository: cartRepository),
+          create: (_) => CartProvider(cartRepository),
         ),
         ChangeNotifierProvider(
           create: (_) => WishlistProvider(
@@ -104,14 +104,10 @@ class VendoraApp extends StatelessWidget {
           title: 'Vendora',
           debugShowCheckedModeBanner: false,
 
-          // 🔥 Dynamically switch theme based on toggle
-          theme: themeProvider.isPurpleTheme
-              ? AppTheme.purpleTheme.copyWith(
-                  textTheme: GoogleFonts.poppinsTextTheme(),
-                )
-              : AppTheme.grayTheme.copyWith(
-                  textTheme: GoogleFonts.poppinsTextTheme(),
-                ),
+          // 🔥 Apply theme
+          theme: AppTheme.lightTheme.copyWith(
+            textTheme: GoogleFonts.poppinsTextTheme(),
+          ),
 
           themeMode: ThemeMode.light,
 

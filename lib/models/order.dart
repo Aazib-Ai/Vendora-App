@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../core/errors/failures.dart';
 
 /// Order status enumeration
 enum OrderStatus {

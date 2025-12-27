@@ -8,7 +8,7 @@ import 'package:vendora/features/admin/presentation/widgets/admin_revenue_chart.
 import 'package:vendora/features/admin/presentation/screens/manage_sellers_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/manage_products_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/manage_users_screen.dart';
-import 'package:vendora/features/admin/presentation/screens/seller_kyc_queue_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/seller_kyc_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -39,7 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ManageUsersScreen()),
+          MaterialPageRoute(builder: (_) => const UserManagementScreen()),
         );
         break;
     }
@@ -221,7 +221,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const SellerKYCQueueScreen(),
+                              builder: (_) => const SellerKYCScreen(),
                             ),
                           );
                         },
@@ -312,7 +312,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const ManageUsersScreen(),
+                            builder: (_) => const UserManagementScreen(),
                           ),
                         );
                       },

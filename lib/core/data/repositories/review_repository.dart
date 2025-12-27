@@ -78,7 +78,6 @@ class ReviewRepository implements IReviewRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
-  }
 
   @override
   Future<Either<Failure, Review>> replyToReview(String reviewId, String reply) async {

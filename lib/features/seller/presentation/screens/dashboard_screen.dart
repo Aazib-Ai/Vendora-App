@@ -429,8 +429,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         return Colors.green;
       case OrderStatus.cancelled:
         return Colors.red;
-      case OrderStatus.refunded:
-        return Colors.grey;
     }
   }
 }

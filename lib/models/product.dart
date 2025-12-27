@@ -239,6 +239,8 @@ class Product extends Equatable {
   String get category => categoryId ?? '';
   
   double get price => basePrice;
+  
+  double get rating => averageRating;
 
   String get imageUrl => primaryImageUrl ?? '';
   

@@ -164,7 +164,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                             },
                           ),
                           Text(
-                            product.status,
+                            product.status.name,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 12,

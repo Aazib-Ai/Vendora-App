@@ -22,7 +22,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final seller = context.read<SellerDashboardProvider>().seller;
+    final seller = context.read<SellerDashboardProvider>().currentSeller;
     _nameController = TextEditingController(text: seller?.businessName ?? '');
     _descController = TextEditingController(text: seller?.description ?? '');
     _whatsappController = TextEditingController(text: seller?.whatsappNumber ?? '');
@@ -42,7 +42,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     setState(() => _isLoading = true);
 
     final provider = context.read<SellerDashboardProvider>();
-    final currentSeller = provider.seller;
+    final currentSeller = provider.currentSeller;
 
     if (currentSeller != null) {
       final updatedSeller = currentSeller.copyWith(
@@ -64,8 +64,6 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         },
         (seller) {
           if (mounted) {
-            // Refresh provider data
-            provider.refreshData();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully')),
             );

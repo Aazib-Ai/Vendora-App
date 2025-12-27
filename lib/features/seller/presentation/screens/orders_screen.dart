@@ -80,7 +80,7 @@ class _SellerOrdersContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(provider.error!, style: const TextStyle(color: AppColors.error)),
-                    const SizedBox(height: AppSpacing.md),
+                    SizedBox(height: AppSpacing.md),
                     ElevatedButton(
                       onPressed: () => provider.fetchOrders(),
                       child: const Text('Retry'),
@@ -132,7 +132,7 @@ class _OrdersList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () => context.read<SellerOrdersProvider>().fetchOrders(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: EdgeInsets.all(AppSpacing.md),
         itemCount: orders.length,
         itemBuilder: (context, index) {
           final order = orders[index];
@@ -213,7 +213,7 @@ class _OrdersList extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('Enter the tracking number for this shipment.'),
-            const SizedBox(height: AppSpacing.sm),
+            SizedBox(height: AppSpacing.sm),
             TextField(
               controller: trackingController,
               decoration: const InputDecoration(

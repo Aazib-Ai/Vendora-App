@@ -5,6 +5,7 @@ import 'package:vendora/models/product.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/services/cart_service.dart';
 import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';
+import 'package:vendora/features/buyer/presentation/providers/wishlist_provider.dart';
 import 'package:vendora/features/buyer/presentation/screens/leave_review_screen.dart';
 import 'package:vendora/features/buyer/presentation/widgets/product_reviews_list.dart';
 import 'package:provider/provider.dart';
@@ -249,14 +250,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         Row(
           children: [
              RatingBarIndicator(
-              rating: widget.product.rating,
+              rating: widget.product.averageRating,
               itemBuilder: (_, __) => const Icon(Icons.star, color: Colors.amber),
               itemCount: 5,
               itemSize: 18,
             ),
             const SizedBox(width: 8),
             Text(
-              "${widget.product.rating} (${widget.product.reviewCount} reviews)",
+              "${widget.product.averageRating} (${widget.product.reviewCount} reviews)",
                style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,

@@ -225,10 +225,6 @@ class SellerOrderCard extends StatelessWidget {
         color = AppColors.error;
         label = 'Cancelled';
         break;
-      case OrderStatus.returned: // Handling potential extra status
-        color = Colors.purple;
-        label = 'Returned';
-        break;
     }
 
     return Container(

@@ -10,11 +10,11 @@ enum ProductFormStatus { idle, loading, success, error }
 
 class ProductFormProvider extends ChangeNotifier {
   final ProductRepository _productRepository;
-  final ImageUploadService _imageUploadService;
+  final IImageUploadService _imageUploadService;
 
   ProductFormProvider({
     required ProductRepository productRepository,
-    required ImageUploadService imageUploadService,
+    required IImageUploadService imageUploadService,
   })  : _productRepository = productRepository,
         _imageUploadService = imageUploadService;
 

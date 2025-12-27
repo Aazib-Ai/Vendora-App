@@ -80,7 +80,7 @@ class _ProductReviewsListState extends State<ProductReviewsList> {
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.lall(color: Colors.grey.shade300), // Typo check: Border.all
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
-import 'package:vendora/features/buyer/presentation/providers/auth_provider.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 import 'package:vendora/features/common/widgets/location_picker.dart';
 import '../../../../models/address.dart';
 
@@ -49,7 +49,7 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen> {
         return;
       }
 
-      final userId = context.read<AuthProvider>().user?.id;
+      final userId = context.read<AuthProvider>().currentUser?.id;
       if (userId == null) return;
 
       final addressProvider = context.read<AddressProvider>();

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/wishlist_provider.dart';
 import 'package:vendora/features/buyer/presentation/screens/product_details_screen.dart';
-import 'package:vendora/models/product.dart';
-import 'package:vendora/features/common/presentation/widgets/product_card.dart'; // Assuming this exists or similar
-import 'package:vendora/core/utils/app_colors.dart'; // Assuming exists, otherwise use Colors
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class WishlistScreen extends StatefulWidget {

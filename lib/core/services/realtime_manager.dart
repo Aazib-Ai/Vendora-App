@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
-import '../features/orders/domain/entities/order.dart'; // Assuming Order model exists here or verify path
+
 // If Order model path is unsure, I will use generic imports or verify first. 
 // Based on previous file reads, ProductRepository was in core/data. 
 // I'll try to guess common paths or strictly wait for verification. 

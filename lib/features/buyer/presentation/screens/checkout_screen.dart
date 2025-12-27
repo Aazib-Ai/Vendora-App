@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
-import 'package:vendora/features/buyer/presentation/providers/auth_provider.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 import 'package:vendora/features/cart/presentation/providers/cart_provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
 import 'package:vendora/features/buyer/presentation/screens/address_book_screen.dart';
@@ -19,7 +19,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<AuthProvider>().user?.id;
+      final userId = context.read<AuthProvider>().currentUser?.id;
       if (userId != null) {
         context.read<AddressProvider>().loadAddresses(userId);
       }
@@ -32,7 +32,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartProvider = context.read<CartProvider>();
     final authProvider = context.read<AuthProvider>();
 
-    final user = authProvider.user;
+    final user = authProvider.currentUser;
     final address = addressProvider.selectedAddress;
     final cartItems = cartProvider.items;
 
@@ -195,7 +195,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               'Subtotal (${cartProv.items.length} items)',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
-                            Text('\$${cartProv.total.toStringAsFixed(2)}'),
+                            Text('\$${cartProv.cartTotal.toStringAsFixed(2)}'),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -216,7 +216,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              '\$${cartProv.total.toStringAsFixed(2)}',
+                              '\$${cartProv.cartTotal.toStringAsFixed(2)}',
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
                             ),

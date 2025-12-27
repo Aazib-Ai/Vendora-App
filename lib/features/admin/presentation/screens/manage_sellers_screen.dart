@@ -69,15 +69,10 @@ class _ManageSellersScreenState extends State<ManageSellersScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.grey[200],
-                      backgroundImage: seller.profileImageUrl != null
-                          ? AssetImage(seller.profileImageUrl!)
-                          : null,
-                      child: seller.profileImageUrl == null
-                          ? const Icon(Icons.person)
-                          : null,
+                      child: const Icon(Icons.store),
                     ),
-                    title: Text(seller.name),
-                    subtitle: Text(seller.email),
+                    title: Text(seller.businessName),
+                    subtitle: Text(seller.businessCategory),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dartz/dartz.dart' as dartz; // Alias dartz to avoid conflict
-import 'package:vendora/core/utils/app_colors.dart';
+import 'package:vendora/core/theme/app_colors.dart';
 import 'package:vendora/core/data/repositories/review_repository.dart';
 import 'package:vendora/models/review.dart';
 import 'package:vendora/features/seller/presentation/providers/seller_dashboard_provider.dart';
@@ -66,7 +66,7 @@ class _SellerReviewsScreenState extends State<SellerReviewsScreen> {
       }
       
       // Better approach: Fetch seller's products first
-      final sellerId = provider.seller?.id;
+      final sellerId = provider.currentSeller?.id;
       if (sellerId != null) {
           // This relies on stream or direct fetch. 
           // Since we don't have direct access to 'ProductRepository' here easily without context read

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vendora/core/config/supabase_config.dart';
 import 'package:vendora/core/errors/failures.dart';
-import 'package:vendora/core/errors/exceptions.dart';
+import 'package:vendora/core/errors/exceptions.dart' as app_exceptions;
 import 'package:vendora/models/user_model.dart' as app_models;
 
 /// Authentication repository handling all auth operations with Supabase
@@ -32,7 +32,7 @@ class AuthRepository {
 
       if (authResponse.user == null) {
         return const Left(
-          AuthFailure('Failed to create account', AuthErrorType.signUpFailed),
+          AuthFailure('Failed to create account', app_exceptions.AuthErrorType.unknown),
         );
       }
 
@@ -73,7 +73,7 @@ class AuthRepository {
       }
 
       return Right(user);
-    } on AuthException catch (e) {
+    } on app_exceptions.AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign up auth error: ${e.message}');
       }
@@ -106,7 +106,7 @@ class AuthRepository {
 
       if (authResponse.user == null) {
         return const Left(
-          AuthFailure('Invalid credentials', AuthErrorType.invalidCredentials),
+          AuthFailure('Invalid credentials', app_exceptions.AuthErrorType.invalidCredentials),
         );
       }
 
@@ -117,8 +117,11 @@ class AuthRepository {
         print('✓ User signed in successfully: $email');
       }
 
-      return user;
-    } on AuthException catch (e) {
+      return user.fold(
+        (failure) => Left(failure),
+        (userData) => userData != null ? Right(userData) : const Left(AuthFailure('User not found', app_exceptions.AuthErrorType.userNotFound)),
+      );
+    } on app_exceptions.AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign in error: ${e.message}');
       }
@@ -142,7 +145,7 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on AuthException catch (e) {
+    } on app_exceptions.AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign out error: ${e.message}');
       }
@@ -166,7 +169,7 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on AuthException catch (e) {
+    } on app_exceptions.AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Password reset error: ${e.message}');
       }
@@ -192,7 +195,7 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on AuthException catch (e) {
+    } on app_exceptions.AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Update password error: ${e.message}');
       }

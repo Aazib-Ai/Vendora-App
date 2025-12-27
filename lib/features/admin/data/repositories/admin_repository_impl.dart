@@ -60,12 +60,17 @@ class AdminRepositoryImpl implements IAdminRepository {
       }
 
       return Right(AdminStats(
-        totalUsers: usersCount.count,
-        totalSellers: sellersCount.count,
-        totalProducts: productsCount.count,
-        totalOrders: ordersCount.count,
+        totalUsers: usersCount,
+        totalSellers: sellersCount,
+        totalProducts: productsCount,
+        totalOrders: ordersCount,
         totalRevenue: totalRevenue,
-        platformEarnings: platformEarnings,
+        totalEarnings: platformEarnings,
+        pendingSellers: 0, // TODO: Fetch actual count
+        pendingProducts: 0, // TODO: Fetch actual count
+        activeDisputes: 0, // TODO: Fetch actual count
+        reportedProducts: 0, // TODO: Fetch actual count
+        revenueTrend: [], // TODO: Calculate revenue trend
       ));
     } on PostgrestException catch (e) {
       return Left(ServerFailure(e.message));
@@ -102,12 +107,14 @@ class AdminRepositoryImpl implements IAdminRepository {
           .eq('id', productId);
 
       // Send notification to seller about product approval
-      if (_productRepository != null && _notificationService != null) {
-        final productResult = await _productRepository.getProductById(productId);
+      final repo = _productRepository;
+      final notifyService = _notificationService;
+      if (repo != null && notifyService != null) {
+        final productResult = await repo.getProductById(productId);
         productResult.fold(
           (_) {}, // Ignore error, notification is best-effort
           (product) async {
-            await _notificationService.notifyProductApproval(
+            await notifyService.notifyProductApproval(
               sellerId: product.sellerId,
               productId: productId,
               productName: product.name,
@@ -140,12 +147,14 @@ class AdminRepositoryImpl implements IAdminRepository {
           .eq('id', productId);
 
       // Send notification to seller about product rejection with reason
-      if (_productRepository != null && _notificationService != null) {
-        final productResult = await _productRepository.getProductById(productId);
+      final repo = _productRepository;
+      final notifyService = _notificationService;
+      if (repo != null && notifyService != null) {
+        final productResult = await repo.getProductById(productId);
         productResult.fold(
           (_) {}, // Ignore error, notification is best-effort
           (product) async {
-            await _notificationService.notifyProductRejection(
+            await notifyService.notifyProductRejection(
               sellerId: product.sellerId,
               productId: productId,
               productName: product.name,
@@ -177,12 +186,14 @@ class AdminRepositoryImpl implements IAdminRepository {
           .eq('id', productId);
 
       // Send notification to seller about product being hidden
-      if (_productRepository != null && _notificationService != null) {
-        final productResult = await _productRepository.getProductById(productId);
+      final repo = _productRepository;
+      final notifyService = _notificationService;
+      if (repo != null && notifyService != null) {
+        final productResult = await repo.getProductById(productId);
         productResult.fold(
           (_) {}, // Ignore error, notification is best-effort
           (product) async {
-            await _notificationService.notifyProductHidden(
+            await notifyService.notifyProductHidden(
               sellerId: product.sellerId,
               productId: productId,
               productName: product.name,
@@ -204,16 +215,21 @@ class AdminRepositoryImpl implements IAdminRepository {
     DisputeStatus? status,
   }) async {
     try {
-      var query = _supabaseConfig.client
+      // Filters must be applied BEFORE ordering in Supabase builders sometimes, 
+      // but strictly: from -> select -> filters -> modifiers (order, limit).
+      // If we order first, we return a TransformBuilder which might not support eq.
+      // So we apply eq first.
+      
+      PostgrestFilterBuilder query = _supabaseConfig.client
           .from('disputes')
-          .select()
-          .order('created_at', ascending: false);
+          .select();
 
       if (status != null) {
         query = query.eq('status', status.name);
       }
 
-      final data = await query;
+      final data = await query.order('created_at', ascending: false);
+      
       final disputes = (data as List)
           .map((json) => Dispute.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -371,6 +387,7 @@ class AdminRepositoryImpl implements IAdminRepository {
   }) async {
     try {
       // Fetch orders in date range and group by date
+      // Apply filters BEFORE order
       final ordersData = await _supabaseConfig.client
           .from('orders')
           .select('created_at, total')
@@ -485,7 +502,7 @@ class AdminRepositoryImpl implements IAdminRepository {
       // For now, use category ID as name
       final categoryDataList = <CategorySalesData>[];
       for (final entry in categoryRevenue.entries) {
-        final percentage = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
+        final percentage = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0.0;
         categoryDataList.add(CategorySalesData(
           categoryId: entry.key,
           categoryName: 'Category ${entry.key.substring(0, 8)}', // Simplified

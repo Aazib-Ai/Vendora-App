@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart' hide Order;
 import '../../../../models/order.dart';
 import '../../../../core/data/repositories/order_repository.dart';
 import '../../../../core/errors/failures.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:vendora/core/data/repositories/seller_repository.dart';
 import 'package:vendora/models/seller_model.dart';
-import 'package:vendora/core/errors/failures.dart';
+
 
 class SellerDashboardProvider with ChangeNotifier {
   final SellerRepository _sellerRepository;

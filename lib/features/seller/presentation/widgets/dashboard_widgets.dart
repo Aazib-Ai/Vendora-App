@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:vendora/core/utils/app_colors.dart'; // Ensure this exists or use Colors
+import 'package:vendora/core/theme/app_colors.dart'; // Ensure this exists or use Colors
 
 class StatCard extends StatelessWidget {
   final String title;
@@ -180,7 +180,7 @@ class SalesChart extends StatelessWidget {
     final text = "${date.day}/${date.month}";
 
     return SideTitleWidget(
-      axisSide: meta.axisSide,
+      meta: meta,
       child: Text(text, style: style),
     );
   }

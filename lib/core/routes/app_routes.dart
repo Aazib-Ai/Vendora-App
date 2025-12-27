@@ -164,7 +164,7 @@ class AppRoutes {
       case adminManageProducts:
         return MaterialPageRoute(builder: (_) => const admin.ManageProductsScreen());
       case manageUsers:
-        return MaterialPageRoute(builder: (_) => const ManageUsersScreen());
+        return MaterialPageRoute(builder: (_) => const UserManagementScreen());
       case manageAdmins:
         return MaterialPageRoute(builder: (_) => const ManageAdminsScreen());
       case analytics:

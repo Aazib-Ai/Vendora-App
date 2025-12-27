@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
-import 'package:vendora/features/buyer/presentation/providers/auth_provider.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 import 'package:vendora/features/buyer/presentation/screens/add_edit_address_screen.dart';
 import '../../../../models/address.dart';
 
@@ -17,7 +17,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<AuthProvider>().user?.id;
+      final userId = context.read<AuthProvider>().currentUser?.id;
       if (userId != null) {
         context.read<AddressProvider>().loadAddresses(userId);
       }
@@ -147,7 +147,7 @@ class _AddressCard extends StatelessWidget {
                         ),
                       );
                     } else if (value == 'delete') {
-                      final userId = context.read<AuthProvider>().user?.id;
+                      final userId = context.read<AuthProvider>().currentUser?.id;
                       if (userId != null) {
                         await context
                             .read<AddressProvider>()
