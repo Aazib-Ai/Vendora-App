@@ -256,7 +256,7 @@ class OrderRepository implements IOrderRepository {
       // Send notification to buyer about status change
       // Requirements: 7.9, 14.1
       if (_notificationService != null) {
-        await _notificationService.notifyOrderStatusChange(
+        await _notificationService!.notifyOrderStatusChange(
           userId: currentOrder.userId,
           orderId: orderId,
           newStatus: newStatus,

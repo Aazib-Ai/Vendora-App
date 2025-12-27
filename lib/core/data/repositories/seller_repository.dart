@@ -170,7 +170,6 @@ class SellerRepository implements ISellerRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
-  }
 
   @override
   Future<Either<Failure, Seller>> updateSellerProfile(Seller seller) async {
@@ -228,7 +227,7 @@ class SellerRepository implements ISellerRepository {
       
       // Send approval notification
       if (_notificationService != null) {
-        await _notificationService.notifySellerApproval(userId: userId);
+        await _notificationService!.notifySellerApproval(userId: userId);
       }
       
       return const Right(null);
@@ -257,7 +256,7 @@ class SellerRepository implements ISellerRepository {
 
       // Send rejection notification with reason
       if (_notificationService != null) {
-        await _notificationService.notifySellerRejection(
+        await _notificationService!.notifySellerRejection(
           userId: userId,
           reason: reason,
         );

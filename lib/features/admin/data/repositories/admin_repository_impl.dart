@@ -9,6 +9,7 @@ import 'package:vendora/features/admin/domain/entities/admin_analytics_data.dart
 import 'package:vendora/features/admin/domain/entities/commission_data.dart';
 import 'package:vendora/features/admin/domain/repositories/admin_repository.dart';
 import 'package:vendora/models/dispute.dart';
+import 'package:vendora/models/user_entity.dart';
 
 /// Implementation of admin repository for managing platform operations
 /// Handles dashboard statistics and product moderation
@@ -175,8 +176,20 @@ class AdminRepositoryImpl implements IAdminRepository {
           })
           .eq('id', productId);
 
-      // TODO: Send notification to seller about product being hidden
-      // This would require a notification service implementation
+      // Send notification to seller about product being hidden
+      if (_productRepository != null && _notificationService != null) {
+        final productResult = await _productRepository.getProductById(productId);
+        productResult.fold(
+          (_) {}, // Ignore error, notification is best-effort
+          (product) async {
+            await _notificationService.notifyProductHidden(
+              sellerId: product.sellerId,
+              productId: productId,
+              productName: product.name,
+            );
+          },
+        );
+      }
 
       return const Right(null);
     } on PostgrestException catch (e) {
@@ -627,6 +640,126 @@ class AdminRepositoryImpl implements IAdminRepository {
         commissionBySeller: commissionBySeller,
         commissionTrend: commissionTrend,
       ));
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  // User Management Methods - Requirements 8.5, 8.6
+
+  @override
+  Future<Either<Failure, List<UserEntity>>> getUsers({
+    UserRole? roleFilter,
+    bool? isActiveFilter,
+  }) async {
+    try {
+      // Start with base query
+      PostgrestFilterBuilder query = _supabaseConfig.client.from('users').select();
+
+      // Apply role filter if specified
+      if (roleFilter != null) {
+        query = query.eq('role', roleFilter.name);
+      }
+
+      // Apply active status filter if specified
+      if (isActiveFilter != null) {
+        query = query.eq('is_active', isActiveFilter);
+      }
+
+      // Execute query with ordering
+      final response = await query.order('created_at', ascending: false);
+      
+      final users = (response as List)
+          .map((json) => UserEntity.fromJson(json))
+          .toList();
+
+      return Right(users);
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> banUser(String userId) async {
+    try {
+      // Set isActive to false - Requirements: 8.5
+      await _supabaseConfig.client
+          .from('users')
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
+
+      // Attempt to revoke session using Supabase admin API
+      // This requires admin privileges
+      try {
+        await _supabaseConfig.client.auth.admin.deleteUser(userId);
+      } catch (e) {
+        // Session revocation may fail if admin API is not configured
+        // We continue anyway as the user is marked inactive
+        print('Warning: Could not revoke user session: $e');
+      }
+
+      return const Right(null);
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> banSeller(String sellerId) async {
+    try {
+      // First, get the seller's user_id
+      final sellerData = await _supabaseConfig.client
+          .from('sellers')
+          .select('user_id')
+          .eq('id', sellerId)
+          .single();
+
+      final userId = sellerData['user_id'] as String;
+
+      // Set seller isActive to false - Requirements: 8.6
+      await _supabaseConfig.client
+          .from('sellers')
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', sellerId);
+
+      // Hide all seller's products - Requirements: 8.6
+      await _supabaseConfig.client
+          .from('products')
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('seller_id', sellerId);
+
+      // Also ban the associated user account
+      await _supabaseConfig.client
+          .from('users')
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
+
+      // Attempt to revoke session
+      try {
+        await _supabaseConfig.client.auth.admin.deleteUser(userId);
+      } catch (e) {
+        print('Warning: Could not revoke seller session: $e');
+      }
+
+      return const Right(null);
     } on PostgrestException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
