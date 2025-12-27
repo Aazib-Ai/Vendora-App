@@ -1,0 +1,272 @@
+﻿00:00 +0: loading E:/Vendora App/Vendora App/test/property/address_model_test.dart
+00:00 +0: E:/Vendora App/Vendora App/test/property/address_model_test.dart: Address Model Tests Address serialization round-trip
+00:00 +1: E:/Vendora App/Vendora App/test/property/address_model_test.dart: Address Model Tests Address copyWith
+00:00 +2: E:/Vendora App/Vendora App/test/property/commission_test.dart: CommissionCalculator Property Tests Property 4: Commission Calculation Accuracy
+00:00 +3: E:/Vendora App/Vendora App/test/property/commission_test.dart: CommissionCalculator Property Tests Throws error for negative amount
+00:00 +4: E:/Vendora App/Vendora App/test/property/inventory_validation_test.dart: Property 14: Quantity Validation Non-Negative Stock quantity validator should reject negative values
+00:00 +5: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine pending can transition to processing
+00:00 +6: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine pending can transition to cancelled
+00:00 +7: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine pending cannot transition to shipped
+00:00 +8: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine pending cannot transition to delivered
+00:00 +9: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine processing can transition to shipped
+00:00 +10: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine processing can transition to cancelled
+00:00 +11: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine processing cannot transition to pending
+00:00 +12: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine processing cannot transition to delivered
+00:00 +13: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine shipped can transition to delivered
+00:00 +14: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine shipped cannot transition to any other status
+00:00 +15: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine delivered is a terminal state - no transitions allowed
+00:00 +16: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine cancelled is a terminal state - no transitions allowed
+00:00 +17: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine transition returns new status for valid transitions
+00:00 +18: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine transition returns null for invalid transitions
+00:00 +19: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine getAvailableTransitions returns correct options for pending
+00:00 +20: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine getAvailableTransitions returns correct options for processing
+00:00 +21: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine getAvailableTransitions returns correct options for shipped
+00:00 +22: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine getAvailableTransitions returns empty for terminal states
+00:00 +23: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canCancel is true for pending orders
+00:00 +24: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canCancel is true for processing orders
+00:00 +25: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canCancel is false for shipped orders
+00:00 +26: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canDispute is true for recently delivered orders
+00:00 +27: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canDispute is false for orders delivered more than 7 days ago
+00:00 +28: E:/Vendora App/Vendora App/test/property/order_state_machine_property_test.dart: Order State Machine Order.canTransitionTo works correctly
+00:00 +29: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip UserEntity serialization round-trip preserves all fields
+00:00 +30: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Product serialization round-trip preserves all fields
+00:00 +31: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Order serialization round-trip preserves all fields
+00:00 +32: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Address serialization round-trip preserves all fields
+00:00 +33: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Review serialization round-trip preserves all fields
+00:00 +34: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip WishlistItem serialization round-trip preserves all fields
+00:00 +35: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Notification serialization round-trip preserves all fields
+00:00 +36: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip Dispute serialization round-trip preserves all fields
+00:00 +37: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip ProductImage serialization round-trip preserves all fields
+00:00 +38: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip ProductVariant serialization round-trip preserves all fields
+00:00 +39: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip OrderItem serialization round-trip preserves all fields
+00:00 +40: E:/Vendora App/Vendora App/test/property/serialization_property_test.dart: Model Serialization Round-Trip OrderStatusHistory serialization round-trip preserves all fields
+00:00 +41 -1: loading E:/Vendora App/Vendora App/test/property_tests/cart_logic_test.dart [E]
+  Failed to load "E:/Vendora App/Vendora App/test/property_tests/cart_logic_test.dart":
+  Compilation failed for testPath=E:/Vendora App/Vendora App/test/property_tests/cart_logic_test.dart: test/property_tests/cart_logic_test.dart:18:28: Error: Required named parameter 'sellerId' must be provided.
+        final item = CartItem(
+                             ^
+  lib/models/cart_item_model.dart:15:9: Context: Found this candidate, but the arguments don't match.
+    const CartItem({
+          ^^^^^^^^
+  test/property_tests/cart_logic_test.dart:38:28: Error: Required named parameter 'sellerId' must be provided.
+        final item = CartItem(
+                             ^
+  lib/models/cart_item_model.dart:15:9: Context: Found this candidate, but the arguments don't match.
+    const CartItem({
+          ^^^^^^^^
+  test/property_tests/cart_logic_test.dart:61:30: Error: Required named parameter 'sellerId' must be provided.
+      final testItem = CartItem(
+                               ^
+  lib/models/cart_item_model.dart:15:9: Context: Found this candidate, but the arguments don't match.
+    const CartItem({
+          ^^^^^^^^
+  .
+00:00 +41 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Connection retry attempts exactly 3 times on failure
+00:00 +42 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Exponential backoff delays are 1s, 2s, 4s
+00:00 +43 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Successful connection stops retry loop early
+00:00 +44 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Connection failure after max attempts throws exception
+00:00 +45 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Each retry delay is double the previous delay
+00:00 +46 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Total retry time with max failures is approximately 7 seconds
+00:00 +47 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests isInitialized returns false before initialization
+00:00 +48 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Calling initialize() when already initialized returns early
+00:00 +49 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests dispose() resets initialization state
+00:00 +50 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Property Tests Connection timeout is set correctly
+00:00 +51 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Edge Cases Zero retry attempts would fail immediately
+00:00 +52 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Edge Cases Negative retry delay is not allowed
+00:00 +53 -1: E:/Vendora App/Vendora App/test/property/supabase_config_test.dart: Supabase Connection Retry Edge Cases Environment variables are required
+00:01 +54 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Total equals sum of (quantity ├ù price) for all items
+00:01 +55 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Empty cart has zero total
+00:01 +56 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Single item total equals quantity ├ù price
+00:01 +57 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Updating quantity recalculates total correctly
+00:01 +58 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Adding item increases total by item total
+00:01 +59 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Removing item decreases total by item total
+00:01 +60 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Associative property: Order of adding items does not matter
+00:01 +61 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Edge case: Very small prices
+00:01 +62 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Edge case: Large prices and quantities
+00:01 +63 -1: E:/Vendora App/Vendora App/test/property_tests/cart_total_calculation_property_test.dart: Property 7: Cart Total Calculation Precision: Decimal calculations maintain accuracy
+00:02 +64 -2: loading E:/Vendora App/Vendora App/test/property_tests/home_provider_property_test.dart [E]
+  Failed to load "E:/Vendora App/Vendora App/test/property_tests/home_provider_property_test.dart":
+  Compilation failed for testPath=E:/Vendora App/Vendora App/test/property_tests/home_provider_property_test.dart: test/property_tests/home_provider_property_test.dart:5:8: Error: Error when reading 'lib/models/product_model.dart': The system cannot find the file specified
+  import 'package:vendora/models/product_model.dart';
+         ^
+  test/property_tests/home_provider_property_test.dart:10:8: Error: Type 'Product' not found.
+    List<Product> mockProducts = [];
+         ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:14:26: Error: Type 'Product' not found.
+    Future<Either<Failure, Product>> createProduct(Map<String, dynamic> productData) async {
+                           ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:24:26: Error: Type 'Product' not found.
+    Future<Either<Failure, Product>> getProductById(String id) async {
+                           ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:29:26: Error: Type 'Product' not found.
+    Future<Either<Failure, Product>> updateProduct(String id, Map<String, dynamic> updates) async {
+                           ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:34:15: Error: Type 'Product' not found.
+    Stream<List<Product>> watchSellerProducts(String sellerId) {
+                ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:39:31: Error: Type 'Product' not found.
+    Future<Either<Failure, List<Product>>> getProducts({
+                                ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:10:8: Error: 'Product' isn't a type.
+    List<Product> mockProducts = [];
+         ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:50:23: Error: 'Product' isn't a type.
+      var result = List<Product>.from(mockProducts);
+                        ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:54:38: Error: The getter 'category' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'category'.
+        result = result.where((p) => p.category == category).toList();
+                                       ^^^^^^^^
+  test/property_tests/home_provider_property_test.dart:59:38: Error: The getter 'name' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'name'.
+        result = result.where((p) => p.name.contains(searchQuery)).toList();
+                                       ^^^^
+  test/property_tests/home_provider_property_test.dart:66:35: Error: The getter 'price' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'price'.
+            result.sort((a, b) => a.price.compareTo(b.price));
+                                    ^^^^^
+  test/property_tests/home_provider_property_test.dart:66:53: Error: The getter 'price' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'price'.
+            result.sort((a, b) => a.price.compareTo(b.price));
+                                                      ^^^^^
+  test/property_tests/home_provider_property_test.dart:69:35: Error: The getter 'price' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'price'.
+            result.sort((a, b) => b.price.compareTo(a.price));
+                                    ^^^^^
+  test/property_tests/home_provider_property_test.dart:69:53: Error: The getter 'price' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'price'.
+            result.sort((a, b) => b.price.compareTo(a.price));
+                                                      ^^^^^
+  test/property_tests/home_provider_property_test.dart:72:35: Error: The getter 'rating' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'rating'.
+            result.sort((a, b) => b.rating.compareTo(a.rating));
+                                    ^^^^^^
+  test/property_tests/home_provider_property_test.dart:72:54: Error: The getter 'rating' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'rating'.
+            result.sort((a, b) => b.rating.compareTo(a.rating));
+                                                       ^^^^^^
+  test/property_tests/home_provider_property_test.dart:80:36: Error: The getter 'id' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'id'.
+             result.sort((a, b) => b.id.compareTo(a.id)); 
+                                     ^^
+  test/property_tests/home_provider_property_test.dart:80:51: Error: The getter 'id' isn't defined for the type 'Object?'.
+   - 'Object' is from 'dart:core'.
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'id'.
+             result.sort((a, b) => b.id.compareTo(a.id)); 
+                                                    ^^
+  test/property_tests/home_provider_property_test.dart:105:8: Error: 'Product' isn't a type.
+    List<Product> generateProducts(int count) {
+         ^^^^^^^
+  test/property_tests/home_provider_property_test.dart:106:44: Error: Method not found: 'Product'.
+      return List.generate(count, (index) => Product(
+                                             ^^^^^^^
+  lib/models/demo_data.dart:121:5: Error: No named parameter with the name 'name'.
+      name: 'Aryan Mirza',
+      ^^^^
+  lib/models/seller_model.dart:15:9: Context: Found this candidate, but the arguments don't match.
+    const Seller({
+          ^^^^^^
+  lib/models/demo_data.dart:132:5: Error: No named parameter with the name 'name'.
+      name: 'Ali Khan',
+      ^^^^
+  lib/models/seller_model.dart:15:9: Context: Found this candidate, but the arguments don't match.
+    const Seller({
+          ^^^^^^
+  lib/models/demo_data.dart:171:9: Error: No named parameter with the name 'price'.
+          price: 4500,
+          ^^^^^
+  lib/models/order.dart:122:9: Context: Found this candidate, but the arguments don't match.
+    const OrderItem({
+          ^^^^^^^^^
+  lib/models/demo_data.dart:177:9: Error: No named parameter with the name 'price'.
+          price: 150000,
+          ^^^^^
+  lib/models/order.dart:122:9: Context: Found this candidate, but the arguments don't match.
+    const OrderItem({
+          ^^^^^^^^^
+  lib/models/demo_data.dart:184:19: Error: Method not found: 'ShippingInfo'.
+      shippingInfo: ShippingInfo(
+                    ^^^^^^^^^^^^
+  lib/models/demo_data.dart:189:18: Error: Method not found: 'PaymentInfo'.
+      paymentInfo: PaymentInfo(
+                   ^^^^^^^^^^^
+  lib/models/demo_data.dart:184:5: Error: No named parameter with the name 'shippingInfo'.
+      shippingInfo: ShippingInfo(
+      ^^^^^^^^^^^^
+  lib/models/order.dart:223:9: Context: Found this candidate, but the arguments don't match.
+    const Order({
+          ^^^^^
+  lib/models/demo_data.dart:202:9: Error: No named parameter with the name 'price'.
+          price: 4500,
+          ^^^^^
+  lib/models/order.dart:122:9: Context: Found this candidate, but the arguments don't match.
+    const OrderItem({
+          ^^^^^^^^^
+  lib/models/demo_data.dart:209:19: Error: Method not found: 'ShippingInfo'.
+      shippingInfo: ShippingInfo(
+                    ^^^^^^^^^^^^
+  lib/models/demo_data.dart:214:18: Error: Method not found: 'PaymentInfo'.
+      paymentInfo: PaymentInfo(
+                   ^^^^^^^^^^^
+  lib/models/demo_data.dart:209:5: Error: No named parameter with the name 'shippingInfo'.
+      shippingInfo: ShippingInfo(
+      ^^^^^^^^^^^^
+  lib/models/order.dart:223:9: Context: Found this candidate, but the arguments don't match.
+    const Order({
+          ^^^^^
+  .
+00:03 +64 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Valid JPEG files should pass validation
+00:03 +65 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Valid PNG files should pass validation
+00:03 +66 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Valid WebP files should pass validation
+00:03 +67 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:03 +68 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:03 +69 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:03 +70 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:03 +71 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:03 +72 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Invalid file types should be rejected
+00:04 +73 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +74 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +75 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +76 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +77 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +78 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +79 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +80 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +81 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files exceeding 10MB size limit should be rejected
+00:04 +82 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Files at exact 10MB limit should pass validation
+00:04 +83 -2: E:/Vendora App/Vendora App/test/property_tests/stock_decrement_property_test.dart: Property 3: Stock Decrement on Order Placement Stock decrements by exact ordered quantity
+00:04 +84 -2: E:/Vendora App/Vendora App/test/property_tests/stock_decrement_property_test.dart: Property 3: Stock Decrement on Order Placement Stock decrements by exact ordered quantity
+00:04 +85 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Edge case: Non-existent file should be rejected
+00:04 +86 -2: E:/Vendora App/Vendora App/test/property_tests/stock_decrement_property_test.dart: Property 3: Stock Decrement on Order Placement Stock never goes negative
+00:04 +87 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +88 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +89 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +90 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +91 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +92 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +93 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Multiple valid extensions with different cases should be handled
+00:04 +94 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +95 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +96 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +97 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +98 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +99 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +100 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +101 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +102 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +103 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:04 +104 -2: E:/Vendora App/Vendora App/test/property_tests/image_upload_validation_test.dart: Property 16: Image Upload Validation Property: All combinations of valid types and sizes should pass
+00:05 +105 -2: E:/Vendora App/Vendora App/test/services/image_upload_service_test.dart: R2ImageUploadService File Validation should accept file at exact 10MB limit
+00:05 +106 -2: E:/Vendora App/Vendora App/test/services/image_upload_service_test.dart: R2ImageUploadService MockImageUploadService should return mock URL for valid upload
+00:05 +107 -2: E:/Vendora App/Vendora App/test/services/image_upload_service_test.dart: R2ImageUploadService MockImageUploadService should upload multiple images
+00:07 +108 -2: E:/Vendora App/Vendora App/test/services/image_upload_service_test.dart: R2ImageUploadService MockImageUploadService should delete image
+00:07 +109 -2: Some tests failed.

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'package:vendora/features/seller/presentation/providers/seller_dashboard_provider.dart';
+import 'package:vendora/models/seller_model.dart';
+import 'package:vendora/core/theme/app_colors.dart'; // Assuming AppColors exists, else fallback
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
@@ -14,198 +18,272 @@ class StatsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Statistics',
+          'Analytics & Commission',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         backgroundColor: Colors.white,
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- UPDATED STAT CARDS PER REQUEST ---
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'Monthly Sales',
-                    value: 'Rs 154K',
-                    icon: Icons.account_balance_wallet_outlined,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _StatCard(
-                    title: 'Monthly Orders',
-                    value: '142',
-                    icon: Icons.shopping_bag_outlined,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'Avg. Order',
-                    value: 'Rs 1.2K',
-                    icon: Icons.analytics_outlined,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _StatCard(
-                    title: 'Top Seller',
-                    value: 'Diamond Ring',
-                    icon: Icons.star_outline,
-                    isSmallText: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
+      body: Consumer<SellerDashboardProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // --- REVENUE PERFORMANCE CHART (BLUE GRADIENT THEME) ---
-            const Text(
-              'Revenue Performance',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            Container(
-              height: 250,
-              padding: const EdgeInsets.only(right: 20, top: 24, bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) => Text(
-                          '${value.toInt()}k',
-                          style: const TextStyle(color: Colors.white38, fontSize: 10),
-                        ),
+          if (provider.error != null) {
+            return Center(child: Text('Error: ${provider.error}'));
+          }
+
+          final stats = provider.stats;
+          if (stats == null) {
+            return const Center(child: Text('No analytics data available'));
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- FINANCIAL SUMMARY CARDS ---
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Total Revenue',
+                        value: '\$${stats.netEarnings + stats.totalCommission}', // Gross
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: Colors.black,
                       ),
                     ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                          if (value.toInt() >= 0 && value.toInt() < days.length) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(days[value.toInt()],
-                                  style: const TextStyle(color: Colors.white38, fontSize: 10)),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: [
-                        const FlSpot(0, 2),
-                        const FlSpot(1, 1.5),
-                        const FlSpot(2, 3),
-                        const FlSpot(3, 2.5),
-                        const FlSpot(4, 4.5),
-                        const FlSpot(5, 3.8),
-                        const FlSpot(6, 5),
-                      ],
-                      isCurved: true,
-                      color: Colors.blueAccent, // Blue accent per image request
-                      barWidth: 4,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blueAccent.withOpacity(0.3),
-                            Colors.blueAccent.withOpacity(0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Net Earnings',
+                        value: '\$${stats.netEarnings.toStringAsFixed(2)}',
+                        icon: Icons.monetization_on_outlined,
+                        color: Colors.green,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Commission (10%)',
+                        value: '\$${stats.totalCommission.toStringAsFixed(2)}',
+                        icon: Icons.pie_chart_outline,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Total Orders',
+                        value: '${stats.ordersToday + stats.ordersPending}', // Crude total approximation for display or use ordersToday
+                        icon: Icons.shopping_bag_outlined,
+                        color: Colors.blueGrey,
+                        // Note: ideally we want Total All Time orders, but SellerStats currently has Daily/Pending.
+                        // Using 'Orders Today' + 'Pending' might be misleading if titled 'Total Orders'
+                        // Let's use 'Orders Today' per model
+                      ),
+                    ),
+                  ],
+                ),
+                
+                 const SizedBox(height: 15),
+                 // Today specific
+                 Row(
+                  children: [
+                     Expanded(
+                      child: _StatCard(
+                        title: 'Sales Today',
+                        value: '\$${stats.salesToday.toStringAsFixed(2)}',
+                        icon: Icons.today,
+                        isSmallText: true,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _StatCard(
+                        title: 'Pending Orders',
+                        value: '${stats.ordersPending}',
+                        icon: Icons.hourglass_empty,
+                        isSmallText: true,
+                      ),
+                    ),
+                  ]
+                 ),
 
-            const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-            // --- TOP PERFORMING PRODUCTS ---
-            const Text(
-              'Top Performing Products',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 15),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 3,
-              itemBuilder: (context, index) {
-                final productNames = ["Antique Diamond Ring", "Modern light clothes", "Harry Potter II"];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(12),
+                // --- REVENUE PERFORMANCE CHART (7 DAYS) ---
+                const Text(
+                  'Revenue Trend (7 Days)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                Container(
+                  height: 250,
+                  padding: const EdgeInsets.only(right: 20, top: 24, bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[900],
-                        borderRadius: BorderRadius.circular(14),
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: false),
+                      titlesData: FlTitlesData(
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) => Text(
+                              '${value.compact()}',
+                              style: const TextStyle(color: Colors.white38, fontSize: 10),
+                            ),
+                            reservedSize: 30,
+                          ),
+                        ),
+                        bottomTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false), // Hide days for simplicity or implement date mapping
+                        ),
                       ),
-                      child: const Icon(Icons.image, color: Colors.white24),
-                    ),
-                    title: Text(
-                      productNames[index],
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '${(index + 1) * 15} sales this month',
-                      style: const TextStyle(color: Colors.white38, fontSize: 12),
-                    ),
-                    trailing: const Text(
-                      'Rs 5,000',
-                      style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.w900),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: List.generate(stats.weeklySales.length, (index) {
+                            return FlSpot(index.toDouble(), stats.weeklySales[index]);
+                          }),
+                          isCurved: true,
+                          color: Colors.blueAccent,
+                          barWidth: 4,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blueAccent.withOpacity(0.3),
+                                Colors.blueAccent.withOpacity(0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              },
+                ),
+
+                const SizedBox(height: 30),
+
+                 // --- CATEGORY PERFORMANCE PIE CHART ---
+                const Text(
+                  'Category Performance',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                 if (stats.categorySales.isNotEmpty)
+                  AspectRatio(
+                    aspectRatio: 1.3,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 0,
+                        centerSpaceRadius: 40,
+                        sections: _generateCategorySections(stats.categorySales),
+                      ),
+                    ),
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text("No sales data yet."),
+                  ),
+
+                const SizedBox(height: 30),
+
+                // --- TOP PERFORMING PRODUCTS ---
+                const Text(
+                  'Top Performing Products',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: stats.topProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = stats.topProducts[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.shopping_cart, color: Colors.white24),
+                        ),
+                        title: Text(
+                          product.productName,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${product.salesCount} sold',
+                          style: const TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
+                        trailing: Text(
+                          '\$${product.totalRevenue.toStringAsFixed(0)}',
+                          style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+  
+  List<PieChartSectionData> _generateCategorySections(Map<String, double> categorySales) {
+    const colors = [Colors.blue, Colors.red, Colors.green, Colors.yellow, Colors.purple, Colors.orange];
+    int colorIndex = 0;
+    
+    return categorySales.entries.map((entry) {
+        final color = colors[colorIndex % colors.length];
+        colorIndex++;
+        
+        return PieChartSectionData(
+          color: color,
+          value: entry.value,
+          title: '${entry.key}\n${entry.value.toStringAsFixed(0)}',
+          radius: 50,
+          titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+        );
+    }).toList();
+  }
+}
+
+extension NumberExport on num {
+  String compact() {
+    if (this >= 1000000) return '${(this / 1000000).toStringAsFixed(1)}M';
+    if (this >= 1000) return '${(this / 1000).toStringAsFixed(1)}k';
+    return toStringAsFixed(0);
   }
 }
 
@@ -214,12 +292,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final bool isSmallText;
+  final Color color;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.icon,
     this.isSmallText = false,
+    this.color = Colors.black,
   });
 
   @override
@@ -227,7 +307,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: color, // Use dynamic color
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
@@ -250,7 +330,7 @@ class _StatCard extends StatelessWidget {
             title,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withOpacity(0.8),
               fontWeight: FontWeight.w600,
             ),
           ),

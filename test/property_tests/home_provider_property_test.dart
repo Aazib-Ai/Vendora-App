@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:vendora/core/data/repositories/product_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/home_provider.dart';
-import 'package:vendora/models/product_model.dart';
+import 'package:vendora/models/product.dart';
 import 'package:vendora/core/errors/failures.dart';
 
 // Manual Mock for Repository
@@ -69,7 +69,7 @@ class MockProductRepository implements IProductRepository {
           result.sort((a, b) => b.price.compareTo(a.price));
           break;
         case ProductSortOption.rating:
-          result.sort((a, b) => b.rating.compareTo(a.rating));
+          result.sort((a, b) => b.averageRating.compareTo(a.averageRating));
           break;
         case ProductSortOption.newest:
            // Mock check: Assuming mocked list is already in some order or id
@@ -106,15 +106,19 @@ void main() {
     return List.generate(count, (index) => Product(
       id: index.toString(),
       name: 'Product $index',
-      category: index % 2 == 0 ? 'Shoes' : 'Clothes',
+      categoryId: index % 2 == 0 ? 'Shoes' : 'Clothes',
       description: 'Desc',
-      price: (index + 1) * 100.0, // 100, 200, 300...
-      imageUrl: 'img',
-      rating: (index % 5) + 1.0,
+      basePrice: (index + 1) * 100.0,
+      images: [
+        ProductImage(id: 'img$index', productId: index.toString(), url: 'img', displayOrder: 0, isPrimary: true)
+      ],
+      averageRating: (index % 5) + 1.0,
       reviewCount: 0,
       sellerId: 's1',
-      status: 'approved',
+      status: ProductStatus.approved,
       specifications: {},
+      createdAt: DateTime.now(),
+      stockQuantity: 100,
     ));
   }
 

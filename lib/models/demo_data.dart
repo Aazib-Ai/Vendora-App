@@ -1,19 +1,24 @@
-import '../models/product_model.dart';
+import '../models/product.dart';
 import '../models/user_model.dart';
-import '../models/order_model.dart';
+import '../models/order.dart';
 import '../models/seller_model.dart';
 import '../models/admin_model.dart';
 
+// Demo Products
 // Demo Products
 final List<Product> demoProducts = [
   Product(
     id: '1',
     name: 'Antique Diamond Ring',
-    category: 'Jewellery',
+    categoryId: 'Jewellery',
     description: 'Beautiful antique diamond ring with exquisite craftsmanship.',
-    price: 150000,
-    imageUrl: 'assets/images/ring.png',
-    rating: 5.0,
+    basePrice: 150000,
+    stockQuantity: 10,
+    createdAt: DateTime.now(),
+    images: [
+      ProductImage(id: 'img1', productId: '1', url: 'assets/images/ring.png', displayOrder: 0, isPrimary: true)
+    ],
+    averageRating: 5.0,
     reviewCount: 12,
     specifications: {
       'size': '5',
@@ -21,16 +26,20 @@ final List<Product> demoProducts = [
       'Quality': 'A+',
     },
     sellerId: 'seller1',
-    status: 'approved',
+    status: ProductStatus.approved,
   ),
   Product(
     id: '2',
     name: 'Modern light clothes',
-    category: 'Clothing',
+    categoryId: 'Clothing',
     description: 'Comfortable and stylish modern clothing.',
-    price: 4500,
-    imageUrl: 'assets/images/clothes.png',
-    rating: 5.0,
+    basePrice: 4500,
+    stockQuantity: 50,
+     createdAt: DateTime.now(),
+    images: [
+       ProductImage(id: 'img2', productId: '2', url: 'assets/images/clothes.png', displayOrder: 0, isPrimary: true)
+    ],
+    averageRating: 5.0,
     reviewCount: 8,
     specifications: {
       'size': 'M',
@@ -38,16 +47,20 @@ final List<Product> demoProducts = [
       'Material': 'Cotton',
     },
     sellerId: 'seller2',
-    status: 'approved',
+    status: ProductStatus.approved,
   ),
   Product(
     id: '3',
     name: 'Harry Potter Series II',
-    category: 'Books',
+    categoryId: 'Books',
     description: 'Harry Potter and the Cursed Child is a play written by Jack Thorne from an original story by Thorne, J. K. Rowling, and John Tiffany.',
-    price: 4500,
-    imageUrl: 'assets/images/book.png',
-    rating: 4.5,
+    basePrice: 4500,
+    stockQuantity: 20,
+     createdAt: DateTime.now(),
+    images: [
+       ProductImage(id: 'img3', productId: '3', url: 'assets/images/book.png', displayOrder: 0, isPrimary: true)
+    ],
+    averageRating: 4.5,
     reviewCount: 25,
     specifications: {
       'Author': 'J.K. Rowling',
@@ -55,16 +68,20 @@ final List<Product> demoProducts = [
       'Language': 'English',
     },
     sellerId: 'seller1',
-    status: 'approved',
+    status: ProductStatus.approved,
   ),
   Product(
     id: '4',
     name: 'Light Dress Bless',
-    category: 'Clothing',
+    categoryId: 'Clothing',
     description: 'Elegant light dress perfect for any occasion.',
-    price: 4500,
-    imageUrl: 'assets/images/dress.png',
-    rating: 5.0,
+    basePrice: 4500,
+    stockQuantity: 5,
+     createdAt: DateTime.now(),
+    images: [
+       ProductImage(id: 'img4', productId: '4', url: 'assets/images/dress.png', displayOrder: 0, isPrimary: true)
+    ],
+    averageRating: 5.0,
     reviewCount: 15,
     specifications: {
       'size': 'S',
@@ -72,7 +89,7 @@ final List<Product> demoProducts = [
       'Material': 'Silk',
     },
     sellerId: 'seller2',
-    status: 'pending',
+    status: ProductStatus.pending,
   ),
 ];
 
@@ -101,24 +118,27 @@ final List<User> demoUsers = [
 final List<Seller> demoSellers = [
   Seller(
     id: 'seller1',
-    name: 'Aryan Mirza',
-    email: 'zeesheir420@gmail.com',
+    userId: 'user1',
+    businessName: 'Aryan Mirza',
     businessCategory: 'Jewellery',
-    address: 'Street 15, Model Town',
-    profileImageUrl: 'assets/images/profile.png',
+    description: 'Best Jewellery in town',
+    whatsappNumber: '+92 304 0974326',
     status: 'pending',
-    totalProducts: 5,
     totalSales: 250000.0,
+    walletBalance: 0.0,
+    createdAt: DateTime.now(),
   ),
   Seller(
     id: 'seller2',
-    name: 'Ali Khan',
-    email: 'ali@mail.com',
+    userId: 'user2',
+    businessName: 'Ali Khan',
     businessCategory: 'Clothing',
-    address: 'Street 20, Gulberg',
+    description: 'Best Clothing in town',
+    whatsappNumber: '+92 300 1234567',
     status: 'approved',
-    totalProducts: 12,
     totalSales: 500000.0,
+    walletBalance: 0.0,
+    createdAt: DateTime.now(),
   ),
 ];
 
@@ -146,58 +166,58 @@ final List<Order> demoOrders = [
   Order(
     id: 'order1',
     userId: 'user1',
+    addressId: 'addr1',
     items: [
       OrderItem(
+        id: 'item1',
+        orderId: 'order1',
         productId: '2',
         productName: 'Modern light clothes',
+        sellerId: 'seller2',
         quantity: 1,
-        price: 4500,
+        unitPrice: 4500,
+        totalPrice: 4500,
       ),
       OrderItem(
+        id: 'item2',
+        orderId: 'order1',
         productId: '1',
         productName: 'Antique Diamond Ring',
+        sellerId: 'seller1',
         quantity: 1,
-        price: 150000,
+        unitPrice: 150000,
+        totalPrice: 150000,
       ),
     ],
     subtotal: 154500,
+    platformCommission: 15450,
     total: 154500,
-    status: 'completed',
+    status: OrderStatus.delivered,
+    paymentMethod: 'visa',
     createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    shippingInfo: ShippingInfo(
-      name: 'Aryan Ijaz',
-      address: 'Street 15, Model Town',
-      phone: '+92 304 0974326',
-    ),
-    paymentInfo: PaymentInfo(
-      method: 'visa',
-      maskedNumber: '**** **** **** 2143',
-    ),
   ),
   Order(
     id: 'order2',
     userId: 'user1',
+    addressId: 'addr1',
     items: [
       OrderItem(
+        id: 'item3',
+        orderId: 'order2',
         productId: '3',
         productName: 'Harry Potter Series II',
+        sellerId: 'seller1',
         quantity: 1,
-        price: 4500,
+        unitPrice: 4500,
+        totalPrice: 4500,
       ),
     ],
     subtotal: 4500,
+    platformCommission: 450,
     total: 4500,
-    status: 'pending',
+    status: OrderStatus.pending,
+    paymentMethod: 'jazzcash',
     createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    shippingInfo: ShippingInfo(
-      name: 'Aryan Ijaz',
-      address: 'Street 15, Model Town',
-      phone: '+92 304 0974326',
-    ),
-    paymentInfo: PaymentInfo(
-      method: 'jazzcash',
-      maskedNumber: '**** **** **** 1345',
-    ),
   ),
 ];
 

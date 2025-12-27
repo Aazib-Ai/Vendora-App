@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vendora/models/product_model.dart';
+import 'package:vendora/models/product.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/services/cart_service.dart';
 import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';

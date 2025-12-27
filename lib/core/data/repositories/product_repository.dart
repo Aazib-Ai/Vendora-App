@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/supabase_config.dart';
 import '../../errors/failures.dart';
 import '../../services/cache_service.dart';
-import '../../../models/product_model.dart';
+import '../../../models/product.dart';
 
 /// Product sort options for querying
 enum ProductSortOption {
@@ -76,7 +76,7 @@ class ProductRepository implements IProductRepository {
         final cachedData = _cacheService.getCachedProducts();
         if (cachedData.isNotEmpty) {
           final products = cachedData
-              .map((json) => _parseProduct(json))
+              .map((json) => Product.fromJson(json))
               .toList();
               
           // Basic filtering on cached data if needed
@@ -141,7 +141,7 @@ class ProductRepository implements IProductRepository {
       }
 
       final products = (response as List)
-          .map((json) => _parseProduct(json as Map<String, dynamic>))
+          .map((json) => Product.fromJson(json as Map<String, dynamic>))
           .toList();
 
       return Right(products);
@@ -153,7 +153,7 @@ class ProductRepository implements IProductRepository {
          final cachedData = _cacheService.getCachedProducts();
          if (cachedData.isNotEmpty) {
             final products = cachedData
-                .map((json) => _parseProduct(json))
+                .map((json) => Product.fromJson(json))
                 .toList();
             return Right(products);
          }
@@ -172,7 +172,7 @@ class ProductRepository implements IProductRepository {
         product_variants(id, sku, size, color, material, price, stock_quantity)
       ''').eq('id', id).single();
 
-      final product = _parseProduct(response);
+      final product = Product.fromJson(response);
       return Right(product);
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST116') {
@@ -189,6 +189,16 @@ class ProductRepository implements IProductRepository {
     Map<String, dynamic> productData,
   ) async {
     try {
+      // Extract related data
+      final List<Map<String, dynamic>> images = 
+          List<Map<String, dynamic>>.from(productData['images'] ?? []);
+      final List<Map<String, dynamic>> variants = 
+          List<Map<String, dynamic>>.from(productData['variants'] ?? []);
+      
+      // Remove from main data to prevent schema error
+      productData.remove('images');
+      productData.remove('variants');
+
       // Set default values
       productData['status'] = 'pending';
       productData['is_active'] = true;
@@ -196,14 +206,38 @@ class ProductRepository implements IProductRepository {
       productData['review_count'] = 0;
       productData['created_at'] = DateTime.now().toIso8601String();
 
-      final response = await _supabaseConfig
+      // 1. Create Product
+      final productResponse = await _supabaseConfig
           .from('products')
           .insert(productData)
           .select()
           .single();
+      
+      final productId = productResponse['id'];
 
-      final product = _parseProduct(response);
-      return Right(product);
+      // 2. Insert Images
+      if (images.isNotEmpty) {
+        final imagesToInsert = images.map((img) => {
+          ...img,
+          'product_id': productId,
+        }).toList();
+        
+        await _supabaseConfig.from('product_images').insert(imagesToInsert);
+      }
+
+      // 3. Insert Variants
+      if (variants.isNotEmpty) {
+        final variantsToInsert = variants.map((v) => {
+          ...v,
+          'product_id': productId,
+          'created_at': DateTime.now().toIso8601String(),
+        }).toList();
+
+        await _supabaseConfig.from('product_variants').insert(variantsToInsert);
+      }
+
+      // 4. Fetch complete product
+      return getProductById(productId);
     } on PostgrestException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
@@ -217,17 +251,58 @@ class ProductRepository implements IProductRepository {
     Map<String, dynamic> updates,
   ) async {
     try {
+      // Extract related data
+      final List<Map<String, dynamic>>? images = 
+          updates.containsKey('images') 
+              ? List<Map<String, dynamic>>.from(updates['images']) 
+              : null;
+      final List<Map<String, dynamic>>? variants = 
+           updates.containsKey('variants') 
+              ? List<Map<String, dynamic>>.from(updates['variants']) 
+              : null;
+
+      updates.remove('images');
+      updates.remove('variants');
+      
       updates['updated_at'] = DateTime.now().toIso8601String();
 
-      final response = await _supabaseConfig
+      // 1. Update Product
+      await _supabaseConfig
           .from('products')
           .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
+          .eq('id', id);
 
-      final product = _parseProduct(response);
-      return Right(product);
+      // 2. Update Images (Replace strategy for simplicity: delete all, insert new)
+      // In a real app, we'd diff them to avoid unnecessary re-uploads/deletes, 
+      // but here we just manage the DB records.
+      if (images != null) {
+        await _supabaseConfig.from('product_images').delete().eq('product_id', id);
+        
+        if (images.isNotEmpty) {
+           final imagesToInsert = images.map((img) => {
+            ...img,
+            'product_id': id,
+          }).toList();
+          await _supabaseConfig.from('product_images').insert(imagesToInsert);
+        }
+      }
+
+      // 3. Update Variants (Replace strategy)
+      if (variants != null) {
+        await _supabaseConfig.from('product_variants').delete().eq('product_id', id);
+        
+        if (variants.isNotEmpty) {
+          final variantsToInsert = variants.map((v) => {
+            ...v,
+            'product_id': id,
+            'created_at': DateTime.now().toIso8601String(),
+          }).toList();
+          await _supabaseConfig.from('product_variants').insert(variantsToInsert);
+        }
+      }
+
+      // 4. Fetch complete product
+      return getProductById(id);
     } on PostgrestException catch (e) {
       if (e.code == 'PGRST116') {
         return const Left(NotFoundFailure('Product not found'));
@@ -241,6 +316,10 @@ class ProductRepository implements IProductRepository {
   @override
   Future<Either<Failure, void>> deleteProduct(String id) async {
     try {
+      // Note: Cascade delete should handle related tables in DB, 
+      // but good to clear images storage if we had that logic here.
+      // R2 cleanup would ideally happen via Edge Function trigger on DB delete.
+      
       await _supabaseConfig.from('products').delete().eq('id', id);
       return const Right(null);
     } on PostgrestException catch (e) {
@@ -256,50 +335,9 @@ class ProductRepository implements IProductRepository {
       'seller_id',
       sellerId,
     ).map((data) {
-      return data.map((json) => _parseProduct(json)).toList();
+      return data.map((json) => Product.fromJson(json)).toList();
     });
   }
 
-  /// Helper method to parse product data from JSON
-  Product _parseProduct(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      category: json['category_id'] as String? ?? '',
-      description: json['description'] as String,
-      price: (json['base_price'] as num).toDouble(),
-      imageUrl: _getMainImageUrl(json['product_images']),
-      rating: (json['average_rating'] as num?)?.toDouble() ?? 0.0,
-      reviewCount: json['review_count'] as int? ?? 0,
-      specifications: _parseSpecifications(json['specifications']),
-      sellerId: json['seller_id'] as String,
-      status: json['status'] as String? ?? 'approved',
-    );
-  }
 
-  /// Extract main image URL from product images
-  String _getMainImageUrl(dynamic images) {
-    if (images == null || images is! List || images.isEmpty) {
-      return '';
-    }
-
-    // Find primary image or use first one
-    final primaryImage = (images as List).firstWhere(
-      (img) => img['is_primary'] == true,
-      orElse: () => images.first,
-    );
-
-    return primaryImage['url'] as String? ?? '';
-  }
-
-  /// Parse specifications from JSONB to Map<String, String>
-  Map<String, String> _parseSpecifications(dynamic specs) {
-    if (specs == null || specs is! Map) {
-      return {};
-    }
-
-    return (specs as Map<String, dynamic>).map(
-      (key, value) => MapEntry(key, value.toString()),
-    );
-  }
 }

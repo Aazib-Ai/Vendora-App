@@ -5,7 +5,7 @@ import '../../../../core/widgets/product_card.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../core/widgets/error_state_widget.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../models/product_model.dart';
+import '../../../../models/product.dart';
 import '../../../../core/data/repositories/product_repository.dart';
 import '../providers/home_provider.dart';
 import '../widgets/hero_banner_carousel.dart';

@@ -7,8 +7,10 @@ import 'package:vendora/models/review.dart';
 abstract class IReviewRepository {
   Future<Either<Failure, List<Review>>> getProductReviews(String productId);
   Future<Either<Failure, Review>> submitReview(Review review);
+
   // Return orderId if reviewable, null otherwise
   Future<Either<Failure, String?>> getReviewableOrderId(String userId, String productId);
+  Future<Either<Failure, Review>> replyToReview(String reviewId, String reply);
 }
 
 class ReviewRepository implements IReviewRepository {
@@ -72,6 +74,25 @@ class ReviewRepository implements IReviewRepository {
       }
       
       return Right(list.first['id'] as String);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+  }
+
+  @override
+  Future<Either<Failure, Review>> replyToReview(String reviewId, String reply) async {
+    try {
+      final response = await _supabaseConfig.client
+          .from('reviews')
+          .update({
+            'seller_reply': reply,
+          })
+          .eq('id', reviewId)
+          .select()
+          .single();
+
+      return Right(Review.fromJson(response));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

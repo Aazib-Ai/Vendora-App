@@ -18,10 +18,14 @@ import 'package:vendora/core/data/repositories/review_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';
 import 'package:vendora/core/data/repositories/notification_repository.dart';
 import 'package:vendora/features/common/presentation/providers/notification_provider.dart';
+import 'package:vendora/core/data/repositories/seller_repository.dart';
+import 'package:vendora/features/seller/presentation/providers/seller_dashboard_provider.dart';
 import 'package:vendora/core/data/repositories/address_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
 import 'package:vendora/core/data/repositories/order_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
+import 'package:vendora/core/data/repositories/admin_repository_impl.dart';
+import 'package:vendora/features/admin/presentation/providers/admin_dashboard_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +46,9 @@ void main() async {
   final reviewRepository = ReviewRepository(supabaseConfig: supabaseConfig);
   final notificationRepository = NotificationRepository(supabaseConfig: supabaseConfig);
   final addressRepository = AddressRepository(supabaseConfig: supabaseConfig);
+  final sellerRepository = SellerRepository(supabaseConfig: supabaseConfig);
   final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
+  final adminRepository = AdminRepositoryImpl(supabaseConfig.client);
 
   runApp(
     MultiProvider(
@@ -67,6 +73,9 @@ void main() async {
           create: (_) => NotificationProvider(notificationRepository),
         ),
         ChangeNotifierProvider(
+          create: (_) => SellerDashboardProvider(sellerRepository),
+        ),
+        ChangeNotifierProvider(
           create: (_) => AddressProvider(addressRepository: addressRepository),
         ),
         ChangeNotifierProvider(
@@ -74,6 +83,9 @@ void main() async {
             orderRepository: orderRepository,
             cartRepository: cartRepository,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AdminDashboardProvider(adminRepository),
         ),
       ],
       child: const VendoraApp(),

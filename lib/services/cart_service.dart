@@ -1,4 +1,4 @@
-import 'package:vendora/models/product_model.dart';
+import '../models/product.dart';
 
 class CartService {
   static final Map<String, int> items = {};

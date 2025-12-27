@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/data/repositories/product_repository.dart';
-import '../../../../models/product_model.dart';
+import '../../../../models/product.dart';
 import '../../../../models/demo_data.dart'; // fallback/reference
 
 class HomeProvider extends ChangeNotifier {

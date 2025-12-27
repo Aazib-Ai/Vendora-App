@@ -104,15 +104,47 @@ class SellerStats extends Equatable {
   final int ordersToday;
   final int ordersPending;
   final double salesToday;
-  final List<double> weeklySales; // 7 days of sales 
+  final double totalCommission;
+  final double netEarnings;
+  final List<double> weeklySales; // 7 days of sales
+  final Map<String, double> categorySales;
+  final List<ProductPerformance> topProducts;
 
   const SellerStats({
     required this.ordersToday,
     required this.ordersPending,
     required this.salesToday,
+    required this.totalCommission,
+    required this.netEarnings,
     required this.weeklySales,
+    required this.categorySales,
+    required this.topProducts,
   });
 
   @override
-  List<Object?> get props => [ordersToday, ordersPending, salesToday, weeklySales];
+  List<Object?> get props => [
+        ordersToday,
+        ordersPending,
+        salesToday,
+        totalCommission,
+        netEarnings,
+        weeklySales,
+        categorySales,
+        topProducts,
+      ];
+}
+
+class ProductPerformance extends Equatable {
+  final String productName;
+  final int salesCount;
+  final double totalRevenue;
+
+  const ProductPerformance({
+    required this.productName,
+    required this.salesCount,
+    required this.totalRevenue,
+  });
+
+  @override
+  List<Object?> get props => [productName, salesCount, totalRevenue];
 }

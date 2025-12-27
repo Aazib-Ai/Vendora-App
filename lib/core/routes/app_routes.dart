@@ -44,7 +44,7 @@ import 'package:vendora/features/admin/presentation/screens/manage_admins_screen
 import 'package:vendora/features/admin/presentation/screens/analytics_screen.dart';
 
 // REQUIRED MODEL
-import 'package:vendora/models/product_model.dart';
+import 'package:vendora/models/product.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -146,7 +146,7 @@ class AppRoutes {
       case viewProduct:
         return MaterialPageRoute(builder: (_) => const ViewProductScreen());
       case sellerOrders:
-        return MaterialPageRoute(builder: (_) => SellerOrdersScreen(orders: demoOrders));
+        return MaterialPageRoute(builder: (_) => const SellerOrdersScreen());
       case sales:
         return MaterialPageRoute(builder: (_) => const SalesScreen());
       case sellerNotifications:
