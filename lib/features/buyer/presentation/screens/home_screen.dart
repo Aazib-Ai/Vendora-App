@@ -286,6 +286,10 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                              provider.setCategory(categoryId);
                           },
                         ),
+                        if (provider.selectedCategoryId != 'All Items') ...[
+                          const SizedBox(height: 20),
+                          _buildCategoryHeader(context, provider),
+                        ],
                         const SizedBox(height: 25),
                         const FlashDealsSection(),
                         const SizedBox(height: 25),
@@ -406,6 +410,74 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
             ],
           ),
         ),
+      ),
+    );
+  }
+  }
+
+  Widget _buildCategoryHeader(BuildContext context, HomeProvider provider) {
+    final category = provider.categories.firstWhere(
+      (c) => c.id == provider.selectedCategoryId,
+      orElse: () => Category(
+        id: 'unknown',
+        sellerId: '',
+        name: 'Unknown Category',
+        createdAt: DateTime.now(),
+      ),
+    );
+
+    if (category.id == 'unknown') return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (category.iconUrl != null && category.iconUrl!.isNotEmpty)
+            Container(
+              width: 50,
+              height: 50,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                image: DecorationImage(
+                  image: NetworkImage(category.iconUrl!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (category.productCount > 0)
+                Text(
+                  '${category.productCount} Items',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

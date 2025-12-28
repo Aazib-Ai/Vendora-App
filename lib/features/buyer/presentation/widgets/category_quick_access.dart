@@ -76,15 +76,18 @@ class CategoryQuickAccess extends StatelessWidget {
               // Determine icon
               Widget iconWidget;
               if (category.iconUrl != null && category.iconUrl!.isNotEmpty) {
-                iconWidget = Image.network(
-                  category.iconUrl!,
-                  width: 28,
-                  height: 28,
-                  color: isSelected ? Colors.white : AppColors.primary,
-                  errorBuilder: (context, error, stackTrace) => Icon(
-                   categoryFallbackIcons[category.name] ?? Icons.category,
-                   color: isSelected ? Colors.white : AppColors.primary,
-                   size: 28,
+                iconWidget = ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    category.iconUrl!,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                     categoryFallbackIcons[category.name] ?? Icons.category,
+                     color: isSelected ? Colors.white : AppColors.primary,
+                     size: 28,
+                    ),
                   ),
                 );
               } else {
