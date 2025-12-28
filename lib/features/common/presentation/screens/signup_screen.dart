@@ -49,9 +49,12 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Navigate based on user role
-      final route = authProvider.getHomeRouteForRole();
-      Navigator.pushReplacementNamed(context, route);
+      // Navigate to email verification with email address
+      Navigator.pushReplacementNamed(
+        context, 
+        AppRoutes.emailVerification,
+        arguments: _emailController.text.trim(),
+      );
     } else {
       // Show error
       ScaffoldMessenger.of(context).showSnackBar(

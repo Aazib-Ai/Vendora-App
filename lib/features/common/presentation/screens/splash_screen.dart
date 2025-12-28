@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,11 +32,40 @@ class _SplashScreenState extends State<SplashScreen>
     _navigateNext();
   }
 
-  void _navigateNext() {
-    Future.delayed(const Duration(seconds: 2), () {
+  Future<void> _navigateNext() async {
+    // Wait for splash animation
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final authProvider = context.read<AuthProvider>();
+    
+    // Wait for auth state to be determined
+    while (authProvider.state == AuthState.initial || authProvider.state == AuthState.loading) {
+      await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
+    }
+
+    if (!mounted) return;
+
+    // Navigate based on authentication state
+    if (authProvider.isAuthenticated) {
+      // User is logged in
+      if (!authProvider.isEmailVerified) {
+        // Email not verified - go to verification screen
+        Navigator.pushReplacementNamed(
+          context, 
+          AppRoutes.emailVerification,
+          arguments: authProvider.apiUser?.email,
+        );
+      } else {
+        // Email verified - go to appropriate home screen
+        final route = authProvider.getHomeRouteForRole();
+        Navigator.pushReplacementNamed(context, route);
+      }
+    } else {
+      // Not authenticated - go to onboarding
       Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-    });
+    }
   }
 
   @override

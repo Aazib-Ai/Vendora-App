@@ -24,10 +24,17 @@ class AuthRepository {
     required String role, // 'buyer' or 'seller'
   }) async {
     try {
-      // 1. Create auth user in Supabase Auth
+      // 1. Create auth user in Supabase Auth with metadata
+      // The database trigger 'on_auth_user_created' will automatically
+      // create the user profile in 'users' and 'sellers' tables.
       final authResponse = await _supabaseConfig.auth.signUp(
         email: email,
         password: password,
+        data: {
+          'name': name,
+          'phone': phone,
+          'role': role,
+        },
       );
 
       if (authResponse.user == null) {
@@ -36,32 +43,12 @@ class AuthRepository {
         );
       }
 
-      final userId = authResponse.user!.id;
-
-      // 2. Create user profile in users table
-      await _supabaseConfig.from('users').insert({
-        'id': userId,
-        'email': email,
-        'name': name,
-        'phone': phone,
-        'role': role,
-        'is_active': true,
-      });
-
-      // 3. If seller, create seller profile with 'unverified' status
-      if (role == 'seller') {
-        await _supabaseConfig.from('sellers').insert({
-          'user_id': userId,
-          'business_name': name, // Use name as initial business name
-          'status': 'unverified', // Requirement 2.8, 18.1
-          'total_sales': 0,
-          'wallet_balance': 0,
-        });
-      }
-
-      // 4. Return user model
+      // 2. Return user model
+      // Note: We return the model immediately. The trigger handles DB insertion asynchronously.
+      // In a real app, you might want to wait or listen for the public user profile creation,
+      // but for this flow it's sufficient to assume success if auth succeeds.
       final user = app_models.User(
-        id: userId,
+        id: authResponse.user!.id,
         name: name,
         email: email,
         phone: phone,
@@ -153,6 +140,33 @@ class AuthRepository {
     } catch (e) {
       if (kDebugMode) {
         print('✗ Sign out error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Resend verification email
+  Future<Either<Failure, void>> resendVerificationEmail(String email) async {
+    try {
+      // For Supabase, we can use resend() method on auth
+      await _supabaseConfig.auth.resend(
+        type: OtpType.signup,
+        email: email,
+      );
+
+      if (kDebugMode) {
+        print('✓ Verification email resent to: $email');
+      }
+
+      return const Right(null);
+    } on app_exceptions.AuthException catch (e) {
+       if (kDebugMode) {
+        print('✗ Resend verification error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Resend verification error: $e');
       }
       return Left(ServerFailure(e.toString()));
     }
@@ -283,5 +297,11 @@ class AuthRepository {
   /// Used for auto-login and session management
   Stream<AuthState> get authStateChanges {
     return _supabaseConfig.auth.onAuthStateChange;
+  }
+
+  /// Check if current user email is verified
+  bool get isEmailVerified {
+    final user = _supabaseConfig.auth.currentUser;
+    return user?.emailConfirmedAt != null;
   }
 }

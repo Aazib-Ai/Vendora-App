@@ -9,6 +9,8 @@ import 'package:vendora/features/common/presentation/screens/login_screen.dart';
 import 'package:vendora/features/common/presentation/screens/signup_screen.dart';
 import 'package:vendora/features/common/presentation/screens/forgot_password_screen.dart';
 import 'package:vendora/features/common/presentation/screens/reset_password_screen.dart';
+import 'package:vendora/features/auth/presentation/screens/email_verification_screen.dart';
+import 'package:vendora/features/auth/presentation/screens/email_confirmed_screen.dart';
 
 // BUYER
 import 'package:vendora/features/buyer/presentation/screens/home_screen.dart';
@@ -54,6 +56,8 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
+  static const String emailVerification = '/email-verification';
+  static const String emailConfirmed = '/email-confirmed';
   static const String adminLogin = '/admin-login';
 
   // Buyer Routes
@@ -108,6 +112,11 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       case resetPassword:
         return MaterialPageRoute(builder: (_) => const ResetPasswordScreen());
+      case emailVerification:
+        final email = routeSettings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => EmailVerificationScreen(email: email));
+      case emailConfirmed:
+        return MaterialPageRoute(builder: (_) => const EmailConfirmedScreen());
 
     // BUYER
       case buyerHome:

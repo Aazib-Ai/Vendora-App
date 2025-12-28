@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import 'package:vendora/core/config/supabase_config.dart';
 import 'package:vendora/core/theme/app_theme.dart';
 import 'package:vendora/core/theme/theme_provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
+import 'package:vendora/core/services/deep_link_service.dart';
 import 'package:vendora/features/auth/data/repositories/auth_repository.dart';
 import 'package:vendora/core/services/cache_service.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart'
@@ -37,6 +39,10 @@ void main() async {
   // Initialize Cache Service
   final cacheService = CacheService();
   await cacheService.init();
+
+  // Initialize Deep Link Service
+  final deepLinkService = DeepLinkService(supabaseConfig);
+  await deepLinkService.initialize();
 
   // Create repositories
   final authRepository = AuthRepository(supabaseConfig);
@@ -87,20 +93,86 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => AdminDashboardProvider(adminRepository),
         ),
+        // Provide deep link service for navigation handling
+        Provider<DeepLinkService>.value(value: deepLinkService),
       ],
-      child: const VendoraApp(),
+      child: VendoraApp(deepLinkService: deepLinkService),
     ),
   );
 }
 
-class VendoraApp extends StatelessWidget {
-  const VendoraApp({super.key});
+class VendoraApp extends StatefulWidget {
+  final DeepLinkService deepLinkService;
+  
+  const VendoraApp({super.key, required this.deepLinkService});
+
+  @override
+  State<VendoraApp> createState() => _VendoraAppState();
+}
+
+class _VendoraAppState extends State<VendoraApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<Uri>? _deepLinkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupDeepLinkListener();
+  }
+
+  void _setupDeepLinkListener() {
+    _deepLinkSubscription = widget.deepLinkService.deepLinkStream.listen((uri) {
+      // When a deep link is received, check if it's an auth callback
+      if (widget.deepLinkService.isAuthCallback(uri)) {
+        // Auth callback processed by DeepLinkService, refresh auth state
+        // and navigate to appropriate screen
+        _handleAuthCallback();
+      } else if (widget.deepLinkService.isPasswordResetCallback(uri)) {
+        // Navigate to password reset screen
+        _navigatorKey.currentState?.pushNamed(AppRoutes.resetPassword);
+      }
+    });
+  }
+
+  Future<void> _handleAuthCallback() async {
+    // Wait a bit for the session to be set
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (!mounted) return;
+    
+    // Get auth provider and check state
+    final navigatorContext = _navigatorKey.currentContext;
+    if (navigatorContext != null && navigatorContext.mounted) {
+      final authProvider = Provider.of<auth.AuthProvider>(navigatorContext, listen: false);
+      await authProvider.reloadUser();
+      
+      if (!mounted) return;
+      
+      if (authProvider.isEmailVerified) {
+        final route = authProvider.getHomeRouteForRole();
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil(route, (_) => false);
+      } else {
+        // Show email confirmed screen (in case they clicked from different device browser)
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.emailConfirmed, 
+          (_) => false,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _deepLinkSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           title: 'Vendora',
           debugShowCheckedModeBanner: false,
 

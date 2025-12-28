@@ -53,7 +53,9 @@ lib/
 │               └── manage_admins_screen.dart
 └── main.dart
 ```
+How to run 
 
+flutter run -d emulator-5554
 ## Features
 
 ### Common Pages
