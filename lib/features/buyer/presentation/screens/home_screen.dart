@@ -7,6 +7,7 @@ import '../../../../core/widgets/error_state_widget.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../models/product.dart';
 import '../../../../core/data/repositories/product_repository.dart';
+import '../../../../core/data/repositories/category_repository.dart';
 import '../providers/home_provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../widgets/hero_banner_carousel.dart';
@@ -21,6 +22,7 @@ class HomeScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => HomeProvider(
         productRepository: context.read<ProductRepository>(),
+        categoryRepository: context.read<CategoryRepository>(),
       )..loadInitialData(),
       child: const _HomeScreenContent(),
     );
@@ -302,16 +304,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         ),
                         const SizedBox(height: 25),
                         CategoryQuickAccess(
-                          categories: [
-                            'All Items',
-                            'Clothing',
-                            'Shoes',
-                            'Watches',
-                            'Jewelry',
-                            'Electronics', 
-                            'Home',
-                            'Books'
-                          ],
+                          categories: provider.categories,
                           selectedCategory: provider.selectedCategory,
                           onCategorySelected: (category) {
                             provider.setCategory(category);

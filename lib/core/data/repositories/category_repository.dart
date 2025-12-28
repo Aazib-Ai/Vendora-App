@@ -7,6 +7,7 @@ import '../../../models/category_model.dart';
 /// Abstract interface for category operations
 abstract class ICategoryRepository {
   Future<Either<Failure, List<Category>>> getCategories(String sellerId);
+  Future<Either<Failure, List<String>>> getAllCategoryNames();
   Future<Either<Failure, Category>> createCategory({
     required String sellerId,
     required String name,
@@ -42,6 +43,33 @@ class CategoryRepository implements ICategoryRepository {
           .map((json) => Category.fromJson(json))
           .toList();
 
+      return Right(categories);
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure('Database error: ${e.message}'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<String>>> getAllCategoryNames() async {
+    try {
+      // Fetch distinct product categories from the products table
+      final response = await _supabaseConfig.client
+          .from('products')
+          .select('category')
+          .eq('is_active', true);
+
+      final categorySet = <String>{};
+      for (final item in response as List) {
+        final category = item['category'] as String?;
+        if (category != null && category.isNotEmpty) {
+          categorySet.add(category);
+        }
+      }
+
+      // Sort alphabetically and return
+      final categories = categorySet.toList()..sort();
       return Right(categories);
     } on PostgrestException catch (e) {
       return Left(ServerFailure('Database error: ${e.message}'));

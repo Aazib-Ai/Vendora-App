@@ -3,15 +3,19 @@ import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/data/repositories/product_repository.dart';
+import '../../../../core/data/repositories/category_repository.dart';
 import '../../../../models/product.dart';
 import '../../../../models/demo_data.dart'; // fallback/reference
 
 class HomeProvider extends ChangeNotifier {
   final IProductRepository _productRepository;
+  final ICategoryRepository? _categoryRepository;
 
   // State
   List<Product> _products = [];
+  List<String> _categories = ['All Items'];
   bool _isLoading = false;
+  bool _isCategoriesLoading = false;
   String? _error;
   
   // Pagination
@@ -27,20 +31,28 @@ class HomeProvider extends ChangeNotifier {
 
   // Getters
   List<Product> get products => _products;
+  List<String> get categories => _categories;
   bool get isLoading => _isLoading;
+  bool get isCategoriesLoading => _isCategoriesLoading;
   String? get error => _error;
   String get searchQuery => _searchQuery;
   String get selectedCategory => _selectedCategory;
   ProductSortOption get sortOption => _sortOption;
   bool get hasMore => _hasMore;
 
-  HomeProvider({required IProductRepository productRepository})
-      : _productRepository = productRepository;
+  HomeProvider({
+    required IProductRepository productRepository,
+    ICategoryRepository? categoryRepository,
+  })  : _productRepository = productRepository,
+        _categoryRepository = categoryRepository;
 
   // Initialize
   Future<void> loadInitialData() async {
     _resetPagination();
-    await _fetchProducts();
+    await Future.wait([
+      _fetchProducts(),
+      _fetchCategories(),
+    ]);
   }
 
   Future<void> loadMore() async {
@@ -51,7 +63,33 @@ class HomeProvider extends ChangeNotifier {
 
   Future<void> refresh() async {
     _resetPagination();
-    await _fetchProducts();
+    await Future.wait([
+      _fetchProducts(),
+      _fetchCategories(),
+    ]);
+  }
+
+  Future<void> _fetchCategories() async {
+    if (_categoryRepository == null) return;
+    
+    _isCategoriesLoading = true;
+    notifyListeners();
+
+    final result = await _categoryRepository!.getAllCategoryNames();
+
+    result.fold(
+      (failure) {
+        // Keep default categories on error
+        _isCategoriesLoading = false;
+        notifyListeners();
+      },
+      (categoryNames) {
+        // Always include 'All Items' first
+        _categories = ['All Items', ...categoryNames];
+        _isCategoriesLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   // Actions

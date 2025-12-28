@@ -5,6 +5,7 @@ import 'package:vendora/core/widgets/bottom_navigation_bar.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 import 'package:vendora/core/data/repositories/order_repository.dart';
+import 'package:vendora/core/data/repositories/seller_repository.dart';
 import 'package:vendora/features/seller/data/models/seller_stats.dart';
 import 'package:vendora/features/seller/presentation/widgets/stats_card.dart';
 import 'package:vendora/features/seller/presentation/widgets/dashboard_chart.dart';
@@ -32,12 +33,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   void _loadStats() {
     final userId = context.read<AuthProvider>().currentUser?.id;
     if (userId != null) {
-      _statsFuture = context.read<OrderRepository>().getSellerStats(userId).then((result) {
-        return result.fold(
+      // First get the seller record to get the actual seller_id
+      _statsFuture = context.read<SellerRepository>().getCurrentSeller(userId).then((sellerResult) {
+        return sellerResult.fold(
           (failure) => throw Exception(failure.message),
-          (stats) => stats,
+          (seller) async {
+            if (seller == null) {
+              throw Exception('Seller profile not found');
+            }
+            // Now use the actual seller.id for stats
+            final statsResult = await context.read<OrderRepository>().getSellerStats(seller.id);
+            return statsResult.fold(
+              (failure) => throw Exception(failure.message),
+              (stats) => stats,
+            );
+          },
         );
-      });
+      }).then((value) async => await value);
     }
   }
 

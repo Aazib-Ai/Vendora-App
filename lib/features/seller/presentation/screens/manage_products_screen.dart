@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/data/repositories/product_repository.dart';
+import '../../../../core/data/repositories/seller_repository.dart';
 import '../../../../models/product.dart';
 import '../../../../../models/product.dart'; // Import for ProductStatus enum if needed
+import '../../../../models/seller_model.dart';
 import '../screens/add_edit_product_screen.dart';
 import '../providers/product_form_provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 
 class ManageProductsScreen extends StatefulWidget {
   const ManageProductsScreen({super.key});
@@ -16,8 +19,28 @@ class ManageProductsScreen extends StatefulWidget {
 class _ManageProductsScreenState extends State<ManageProductsScreen> {
   String searchQuery = "";
   String _sortOption = "Name";
-  // TODO: Get actual seller ID from Auth provider
-  final String _sellerId = 'seller-123-placeholder';
+  late Future<Seller?> _sellerFuture;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadSeller();
+  }
+  
+  void _loadSeller() {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    if (userId != null) {
+      // Fetch the seller record to get the actual seller_id
+      _sellerFuture = context.read<SellerRepository>().getCurrentSeller(userId).then((result) {
+        return result.fold(
+          (failure) => throw Exception(failure.message),
+          (seller) => seller,
+        );
+      });
+    } else {
+      _sellerFuture = Future.value(null);
+    }
+  }
   
   void _navigateToAddEdit(Product? product) {
     Navigator.push(
@@ -153,49 +176,68 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: StreamBuilder<List<Product>>(
-                stream: repo.watchSellerProducts(_sellerId),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              child: FutureBuilder<Seller?>(
+                future: _sellerFuture,
+                builder: (context, sellerSnapshot) {
+                  if (sellerSnapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                  if (sellerSnapshot.hasError) {
+                    return Center(child: Text('Error: ${sellerSnapshot.error}'));
                   }
                   
-                  final products = snapshot.data ?? [];
-                  
-                  if (products.isEmpty) {
-                     return const Center(child: Text('No products found. Add one!'));
+                  final seller = sellerSnapshot.data;
+                  if (seller == null) {
+                    return const Center(child: Text('Seller profile not found. Please contact support.'));
                   }
+                  
+                  // Now we have the actual seller_id, use it for the products stream
+                  return StreamBuilder<List<Product>>(
+                    stream: repo.watchSellerProducts(seller.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      
+                      final products = snapshot.data ?? [];
+                      
+                      if (products.isEmpty) {
+                         return const Center(child: Text('No products found. Add one!'));
+                      }
 
-                  final filteredProducts = products.where((p) {
-                    final query = searchQuery.toLowerCase();
-                    return p.name.toLowerCase().contains(query);
-                  }).toList();
+                      final filteredProducts = products.where((p) {
+                        final query = searchQuery.toLowerCase();
+                        return p.name.toLowerCase().contains(query);
+                      }).toList();
 
-                  // Sort products
-                  filteredProducts.sort((a, b) {
-                    switch (_sortOption) {
-                      case 'Name':
-                        return a.name.compareTo(b.name);
-                      case 'Price: Low to High':
-                        return a.basePrice.compareTo(b.basePrice);
-                      case 'Price: High to Low':
-                        return b.basePrice.compareTo(a.basePrice);
-                      case 'Stock: Low to High':
-                        return a.stockQuantity.compareTo(b.stockQuantity); // Requirements 16.5
-                      default:
-                        return 0;
-                    }
-                  });
+                      // Sort products
+                      filteredProducts.sort((a, b) {
+                        switch (_sortOption) {
+                          case 'Name':
+                            return a.name.compareTo(b.name);
+                          case 'Price: Low to High':
+                            return a.basePrice.compareTo(b.basePrice);
+                          case 'Price: High to Low':
+                            return b.basePrice.compareTo(a.basePrice);
+                          case 'Stock: Low to High':
+                            return a.stockQuantity.compareTo(b.stockQuantity); // Requirements 16.5
+                          default:
+                            return 0;
+                        }
+                      });
 
-                  return ListView.builder(
-                    itemCount: filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-                      return _productListItem(product);
+                      return ListView.builder(
+                        itemCount: filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+                          return _productListItem(product);
+                        },
+                      );
                     },
                   );
                 },

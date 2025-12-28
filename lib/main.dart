@@ -100,6 +100,13 @@ void main() async {
         Provider<ProductRepository>.value(value: productRepository),
         // Provide OrderRepository for seller dashboard and other screens
         Provider<OrderRepository>.value(value: orderRepository),
+        // Provide CategoryRepository and CategoryProvider for seller category management
+        Provider<CategoryRepository>.value(value: categoryRepository),
+        ChangeNotifierProvider(
+          create: (_) => CategoryProvider(categoryRepository: categoryRepository),
+        ),
+        // Provide SellerRepository for seller profile operations
+        Provider<SellerRepository>.value(value: sellerRepository),
         // Provide deep link service for navigation handling
         Provider<DeepLinkService>.value(value: deepLinkService),
       ],
