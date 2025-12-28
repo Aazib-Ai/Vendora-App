@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/data/repositories/product_repository.dart';
 import '../../../../core/data/repositories/category_repository.dart';
 import '../../../../models/product.dart';
+import '../../../../models/category_model.dart';
 import '../../../../models/demo_data.dart'; // fallback/reference
 
 class HomeProvider extends ChangeNotifier {
@@ -13,7 +14,7 @@ class HomeProvider extends ChangeNotifier {
 
   // State
   List<Product> _products = [];
-  List<String> _categories = ['All Items'];
+  List<Category> _categories = [];
   bool _isLoading = false;
   bool _isCategoriesLoading = false;
   String? _error;
@@ -25,18 +26,19 @@ class HomeProvider extends ChangeNotifier {
 
   // Filters & Search
   String _searchQuery = '';
-  String _selectedCategory = 'All Items';
+  // Category ID or 'All Items'
+  String _selectedCategoryId = 'All Items';
   ProductSortOption _sortOption = ProductSortOption.newest;
   Timer? _debounceTimer;
 
   // Getters
   List<Product> get products => _products;
-  List<String> get categories => _categories;
+  List<Category> get categories => _categories;
   bool get isLoading => _isLoading;
   bool get isCategoriesLoading => _isCategoriesLoading;
   String? get error => _error;
   String get searchQuery => _searchQuery;
-  String get selectedCategory => _selectedCategory;
+  String get selectedCategoryId => _selectedCategoryId;
   ProductSortOption get sortOption => _sortOption;
   bool get hasMore => _hasMore;
 
@@ -75,17 +77,15 @@ class HomeProvider extends ChangeNotifier {
     _isCategoriesLoading = true;
     notifyListeners();
 
-    final result = await _categoryRepository!.getAllCategoryNames();
+    final result = await _categoryRepository!.getAllCategories();
 
     result.fold(
       (failure) {
-        // Keep default categories on error
         _isCategoriesLoading = false;
         notifyListeners();
       },
-      (categoryNames) {
-        // Always include 'All Items' first
-        _categories = ['All Items', ...categoryNames];
+      (categories) {
+        _categories = categories;
         _isCategoriesLoading = false;
         notifyListeners();
       },
@@ -106,9 +106,9 @@ class HomeProvider extends ChangeNotifier {
     });
   }
 
-  void setCategory(String category) {
-    if (_selectedCategory != category) {
-      _selectedCategory = category;
+  void setCategory(String categoryId) {
+    if (_selectedCategoryId != categoryId) {
+      _selectedCategoryId = categoryId;
       _resetPagination();
       _fetchProducts();
       notifyListeners();
@@ -140,7 +140,7 @@ class HomeProvider extends ChangeNotifier {
     final result = await _productRepository.getProducts(
       page: _currentPage,
       limit: _pageSize,
-      category: _selectedCategory == 'All Items' ? null : _selectedCategory,
+      category: _selectedCategoryId == 'All Items' ? null : _selectedCategoryId,
       searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
       sortBy: _sortOption,
     );

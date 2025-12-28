@@ -7,7 +7,7 @@ import '../../../models/category_model.dart';
 /// Abstract interface for category operations
 abstract class ICategoryRepository {
   Future<Either<Failure, List<Category>>> getCategories(String sellerId);
-  Future<Either<Failure, List<String>>> getAllCategoryNames();
+  Future<Either<Failure, List<Category>>> getAllCategories();
   Future<Either<Failure, Category>> createCategory({
     required String sellerId,
     required String name,
@@ -33,15 +33,30 @@ class CategoryRepository implements ICategoryRepository {
   @override
   Future<Either<Failure, List<Category>>> getCategories(String sellerId) async {
     try {
+      // Use count option to get the number of products for each category
       final response = await _supabaseConfig.client
           .from('categories')
-          .select()
+          .select('*, products(count)')
           .eq('seller_id', sellerId)
           .order('created_at', ascending: false);
 
-      final categories = (response as List)
-          .map((json) => Category.fromJson(json))
-          .toList();
+      final categories = (response as List).map((json) {
+        // Extract count from the nested response
+        // products: [{count: 5}] -> extract 5
+        int count = 0;
+        if (json['products'] != null) {
+           final productsList = json['products'] as List;
+           if (productsList.isNotEmpty) {
+             count = productsList[0]['count'] as int? ?? 0;
+           }
+        }
+        
+        // Create new map with override product_count
+        final Map<String, dynamic> newJson = Map.from(json);
+        newJson['product_count'] = count;
+        
+        return Category.fromJson(newJson);
+      }).toList();
 
       return Right(categories);
     } on PostgrestException catch (e) {
@@ -52,24 +67,17 @@ class CategoryRepository implements ICategoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<String>>> getAllCategoryNames() async {
+  Future<Either<Failure, List<Category>>> getAllCategories() async {
     try {
-      // Fetch distinct product categories from the products table
       final response = await _supabaseConfig.client
-          .from('products')
-          .select('category')
-          .eq('is_active', true);
+          .from('categories')
+          .select()
+          .order('name', ascending: true);
 
-      final categorySet = <String>{};
-      for (final item in response as List) {
-        final category = item['category'] as String?;
-        if (category != null && category.isNotEmpty) {
-          categorySet.add(category);
-        }
-      }
+      final categories = (response as List)
+          .map((json) => Category.fromJson(json))
+          .toList();
 
-      // Sort alphabetically and return
-      final categories = categorySet.toList()..sort();
       return Right(categories);
     } on PostgrestException catch (e) {
       return Left(ServerFailure('Database error: ${e.message}'));

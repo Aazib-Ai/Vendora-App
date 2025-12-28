@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Category;
 import 'package:provider/provider.dart';
 import '../../../../core/widgets/bottom_navigation_bar.dart';
 import '../../../../core/widgets/product_card.dart';
@@ -6,6 +6,7 @@ import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../core/widgets/error_state_widget.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../models/product.dart';
+import '../../../../models/category_model.dart';
 import '../../../../core/data/repositories/product_repository.dart';
 import '../../../../core/data/repositories/category_repository.dart';
 import '../providers/home_provider.dart';
@@ -268,7 +269,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 child: Consumer<HomeProvider>(
                   builder: (context, provider, _) {
                     if (provider.searchQuery.isNotEmpty || 
-                        provider.selectedCategory != 'All Items') {
+                        provider.selectedCategoryId != 'All Items') {
                       return const SizedBox.shrink();
                     }
                     return Column(
@@ -280,9 +281,9 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         const SizedBox(height: 25),
                         CategoryQuickAccess(
                           categories: provider.categories,
-                          selectedCategory: provider.selectedCategory,
-                          onCategorySelected: (category) {
-                            provider.setCategory(category);
+                          selectedCategoryId: provider.selectedCategoryId, // Updated to use ID
+                          onCategorySelected: (categoryId) {
+                             provider.setCategory(categoryId);
                           },
                         ),
                         const SizedBox(height: 25),

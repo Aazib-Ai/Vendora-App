@@ -1,31 +1,35 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Category;
 import '../../../../core/theme/app_colors.dart';
 
+import '../../../../models/category_model.dart';
+
 class CategoryQuickAccess extends StatelessWidget {
-  final List<String> categories;
-  final String selectedCategory;
+  final List<Category> categories;
+  final String selectedCategoryId; // ID of selected category
   final Function(String) onCategorySelected;
 
   const CategoryQuickAccess({
     super.key,
     required this.categories,
-    required this.selectedCategory,
+    required this.selectedCategoryId,
     required this.onCategorySelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Icons mapping for demo categories - in a real app this might come from API
-    final Map<String, IconData> categoryIcons = {
-      'All Items': Icons.grid_view,
+    // Icons mapping for fallback - demo categories keys
+    final Map<String, IconData> categoryFallbackIcons = {
       'Clothes': Icons.checkroom,
-      'Shoes': Icons.snowshoeing, // best approximation or directions_walk
+      'Shoes': Icons.snowshoeing,
       'Watches': Icons.watch,
       'Jewelry': Icons.diamond,
       'Electronics': Icons.smartphone,
       'Home': Icons.chair,
       'Books': Icons.menu_book,
     };
+
+    // Include 'All Items' as the first option if not present
+    final allItemsSelected = selectedCategoryId == 'All Items';
 
     return Column(
       children: [
@@ -41,10 +45,10 @@ class CategoryQuickAccess extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('See All'),
-              ),
+              // TextButton(
+              //   onPressed: () {},
+              //   child: const Text('See All'),
+              // ),
             ],
           ),
         ),
@@ -53,54 +57,102 @@ class CategoryQuickAccess extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
+            // +1 for "All Items"
+            itemCount: categories.length + 1,
             separatorBuilder: (_, __) => const SizedBox(width: 16),
             itemBuilder: (context, index) {
-              final category = categories[index];
-              final isSelected = category == selectedCategory;
-              final icon = categoryIcons[category] ?? Icons.category;
+              if (index == 0) {
+                return _buildCategoryItem(
+                  name: 'All Items',
+                  icon: Icons.grid_view,
+                  isSelected: allItemsSelected,
+                  onTap: () => onCategorySelected('All Items'),
+                );
+              }
 
-              return GestureDetector(
-                onTap: () => onCategorySelected(category),
-                child: Column(
-                  children: [
-                    Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                        border: isSelected ? null : Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: isSelected ? Colors.white : AppColors.primary,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      category,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? AppColors.primary : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
+              final category = categories[index - 1];
+              final isSelected = category.id == selectedCategoryId;
+              
+              // Determine icon
+              Widget iconWidget;
+              if (category.iconUrl != null && category.iconUrl!.isNotEmpty) {
+                iconWidget = Image.network(
+                  category.iconUrl!,
+                  width: 28,
+                  height: 28,
+                  color: isSelected ? Colors.white : AppColors.primary,
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                   categoryFallbackIcons[category.name] ?? Icons.category,
+                   color: isSelected ? Colors.white : AppColors.primary,
+                   size: 28,
+                  ),
+                );
+              } else {
+                 iconWidget = Icon(
+                   categoryFallbackIcons[category.name] ?? Icons.category,
+                   color: isSelected ? Colors.white : AppColors.primary,
+                   size: 28,
+                 );
+              }
+
+              return _buildCategoryItem(
+                name: category.name,
+                iconWidget: iconWidget,
+                isSelected: isSelected,
+                onTap: () => onCategorySelected(category.id),
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCategoryItem({
+    required String name,
+    IconData? icon,
+    Widget? iconWidget,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            height: 60,
+            width: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: isSelected ? null : Border.all(color: Colors.grey.shade200),
+            ),
+            child: Center(
+              child: iconWidget ?? Icon(
+                icon ?? Icons.category,
+                color: isSelected ? Colors.white : AppColors.primary,
+                size: 28,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              color: isSelected ? AppColors.primary : Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
