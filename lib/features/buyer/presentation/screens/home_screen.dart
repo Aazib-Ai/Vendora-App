@@ -413,7 +413,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
       ),
     );
   }
-  }
+
 
   Widget _buildCategoryHeader(BuildContext context, HomeProvider provider) {
     final category = provider.categories.firstWhere(
