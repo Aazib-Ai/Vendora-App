@@ -345,6 +345,20 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                         Navigator.pushNamed(context, AppRoutes.analytics);
                       },
                     ),
+                    _QuickActionCard(
+                      icon: Icons.campaign_outlined, // Banner/Campaign icon
+                      label: 'Banners',
+                      onTap: () {
+                         Navigator.pushNamed(context, AppRoutes.manageProposals);
+                      },
+                    ),
+                    _QuickActionCard(
+                      icon: Icons.support_agent,
+                      label: 'Support',
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.adminSupport);
+                      },
+                    ),
                   ],
                 ),
               ],

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vendora/models/demo_data.dart';
+import 'package:provider/provider.dart';
+import 'package:vendora/core/theme/theme_provider.dart';
+import 'package:vendora/core/theme/app_theme.dart';
+import 'package:vendora/core/config/supabase_config.dart';
 
 // COMMON
 import 'package:vendora/features/common/presentation/screens/splash_screen.dart';
@@ -9,6 +13,7 @@ import 'package:vendora/features/common/presentation/screens/login_screen.dart';
 import 'package:vendora/features/common/presentation/screens/signup_screen.dart';
 import 'package:vendora/features/common/presentation/screens/forgot_password_screen.dart';
 import 'package:vendora/features/common/presentation/screens/reset_password_screen.dart';
+import 'package:vendora/features/common/presentation/screens/change_password_screen.dart';
 import 'package:vendora/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:vendora/features/auth/presentation/screens/email_confirmed_screen.dart';
 
@@ -22,10 +27,12 @@ import 'package:vendora/features/buyer/presentation/screens/order_complete_scree
 import 'package:vendora/features/buyer/presentation/screens/profile_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/settings_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/help_center_screen.dart';
-import 'package:vendora/features/buyer/presentation/screens/contact_us_screen.dart';
-import 'package:vendora/features/buyer/presentation/screens/report_problem_screen.dart';
+import 'package:vendora/features/common/presentation/screens/contact_us_screen.dart';
+import 'package:vendora/features/common/presentation/screens/report_problem_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/notifications_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/about_vendora_screen.dart';
+import 'package:vendora/features/buyer/presentation/screens/category_products_screen.dart';
+import 'package:vendora/models/category_model.dart';
 
 // SELLER
 import 'package:vendora/features/seller/presentation/screens/dashboard_screen.dart';
@@ -47,9 +54,15 @@ import 'package:vendora/features/admin/presentation/screens/manage_admins_screen
 import 'package:vendora/features/admin/presentation/screens/analytics_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/manage_orders_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/dispute_center_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/admin_support_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/support_ticket_details_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/manage_proposals_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/add_edit_proposal_screen.dart';
+import 'package:vendora/models/proposal.dart';
 
 // REQUIRED MODEL
 import 'package:vendora/models/product.dart';
+import 'package:vendora/features/common/data/models/support_ticket_model.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -65,6 +78,7 @@ class AppRoutes {
 
   // Buyer Routes
   static const String buyerHome = '/buyer/home';
+  static const String buyerCategory = '/buyer/category';
   static const String productDetails = '/buyer/product-details';
   static const String cart = '/buyer/cart';
   static const String checkout = '/buyer/checkout';
@@ -99,6 +113,10 @@ class AppRoutes {
   static const String analytics = '/admin/analytics';
   static const String manageOrders = '/admin/manage-orders';
   static const String disputeCenter = '/admin/dispute-center';
+  static const String adminSupport = '/admin/support';
+  static const String adminTicketDetails = '/admin/ticket-details';
+  static const String manageProposals = '/admin/manage-proposals';
+  static const String editProposal = '/admin/edit-proposal';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -126,30 +144,150 @@ class AppRoutes {
 
     // BUYER
       case buyerHome:
-        return MaterialPageRoute(builder: (_) => const BuyerShellScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const BuyerShellScreen());
+          },
+        );
+      case buyerCategory:
+        final category = routeSettings.arguments as Category;
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(
+              data: themeData,
+              child: CategoryProductsScreen(category: category),
+            );
+          },
+        );
       case productDetails:
         final product = routeSettings.arguments as Product;
-        return MaterialPageRoute(builder: (_) => ProductDetailsScreen(product: product));
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: ProductDetailsScreen(product: product));
+          },
+        );
       case cart:
-        return MaterialPageRoute(builder: (_) => const CartScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const CartScreen());
+          },
+        );
       case checkout:
-        return MaterialPageRoute(builder: (_) => const CheckoutScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const CheckoutScreen());
+          },
+        );
       case orderComplete:
-        return MaterialPageRoute(builder: (_) => const OrderCompleteScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const OrderCompleteScreen());
+          },
+        );
       case profile:
-        return MaterialPageRoute(builder: (_) => const ProfileScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const ProfileScreen());
+          },
+        );
       case settings:
-        return MaterialPageRoute(builder: (_) => const SettingsScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const SettingsScreen());
+          },
+        );
+      case changePassword:
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const ChangePasswordScreen());
+          },
+        );
       case helpCenter:
-        return MaterialPageRoute(builder: (_) => const HelpCenterScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const HelpCenterScreen());
+          },
+        );
       case contactUs:
-        return MaterialPageRoute(builder: (_) => const ContactUsScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const ContactUsScreen());
+          },
+        );
       case reportProblem:
-        return MaterialPageRoute(builder: (_) => const ReportProblemScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const ReportProblemScreen());
+          },
+        );
       case buyerNotifications:
-        return MaterialPageRoute(builder: (_) => const BuyerNotificationsScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const BuyerNotificationsScreen());
+          },
+        );
       case aboutVendora:
-        return MaterialPageRoute(builder: (_) => const AboutVendoraScreen());
+        return MaterialPageRoute(
+          builder: (context) {
+            final themeProvider = Provider.of<ThemeProvider>(context);
+            final themeData = themeProvider.isPurpleTheme
+                ? AppTheme.purpleBuyerTheme
+                : Theme.of(context);
+            return Theme(data: themeData, child: const AboutVendoraScreen());
+          },
+        );
 
     // SELLER
       case sellerDashboard:
@@ -188,13 +326,71 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ManageOrdersScreen());
       case disputeCenter:
         return MaterialPageRoute(builder: (_) => const DisputeCenterScreen());
+      case adminSupport:
+        return MaterialPageRoute(builder: (_) => const AdminSupportScreen());
+      case adminTicketDetails:
+        final ticket = routeSettings.arguments as SupportTicket;
+        return MaterialPageRoute(builder: (_) => AdminTicketDetailsScreen(ticket: ticket));
+      case manageProposals:
+        return MaterialPageRoute(builder: (_) => const ManageProposalsScreen());
+      case editProposal:
+        final proposal = routeSettings.arguments as Proposal?;
+        return MaterialPageRoute(builder: (_) => AddEditProposalScreen(proposal: proposal));
 
       default:
+        if (routeSettings.name?.startsWith('/?') == true) {
+          final name = routeSettings.name!;
+          return MaterialPageRoute(
+            builder: (context) => _DeepLinkEntryScreen(initialRouteName: name),
+          );
+        }
+
         return MaterialPageRoute(
           builder: (_) => Scaffold(
             body: Center(child: Text("No route defined for ${routeSettings.name}")),
           ),
         );
     }
+  }
+}
+
+class _DeepLinkEntryScreen extends StatefulWidget {
+  final String initialRouteName;
+  const _DeepLinkEntryScreen({required this.initialRouteName});
+
+  @override
+  State<_DeepLinkEntryScreen> createState() => _DeepLinkEntryScreenState();
+}
+
+class _DeepLinkEntryScreenState extends State<_DeepLinkEntryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _processDeepLink();
+  }
+
+  Future<void> _processDeepLink() async {
+    final name = widget.initialRouteName;
+    final i = name.indexOf('?');
+    final query = i >= 0 ? name.substring(i + 1) : '';
+    String? code;
+    if (query.isNotEmpty) {
+      final params = Uri.splitQueryString(query);
+      code = params['code'];
+    }
+    if (code != null && code.isNotEmpty) {
+      try {
+        await SupabaseConfig().auth.exchangeCodeForSession(code);
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, AppRoutes.resetPassword);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SizedBox.shrink(),
+    );
   }
 }

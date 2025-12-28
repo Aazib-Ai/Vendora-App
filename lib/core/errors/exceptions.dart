@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 /// Base exception class for the application
 abstract class AppException implements Exception {
@@ -30,7 +30,7 @@ class ServerException extends AppException {
   });
 
   factory ServerException.fromSupabaseError(dynamic error) {
-    if (error is PostgrestException) {
+    if (error is sb.PostgrestException) {
       return ServerException(
         message: error.message,
         code: error.code,
@@ -70,7 +70,7 @@ class AuthException extends AppException {
     super.details,
   });
 
-  factory AuthException.fromSupabaseAuthError(AuthException error) {
+  factory AuthException.fromSupabaseAuthError(sb.AuthException error) {
     final type = _mapAuthErrorType(error.message);
     return AuthException(
       message: error.message,
@@ -136,7 +136,7 @@ class StorageException extends AppException {
     super.details,
   });
 
-  factory StorageException.fromSupabaseStorageError(StorageException error) {
+  factory StorageException.fromSupabaseStorageError(sb.StorageException error) {
     return StorageException(
       message: error.message,
       code: error.toString(),

@@ -59,6 +59,10 @@ class SellerDashboardProvider with ChangeNotifier {
     );
   }
   
+  void updateLocalSeller(Seller seller) {
+    _currentSeller = seller;
+    notifyListeners();
+  }
   void clear() {
       _currentSeller = null;
       _stats = null;

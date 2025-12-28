@@ -14,6 +14,8 @@ abstract class ISellerRepository {
   Future<Either<Failure, List<Seller>>> getAllSellers({String? statusFilter});
   Future<Either<Failure, void>> approveSeller(String sellerId);
   Future<Either<Failure, void>> rejectSeller(String sellerId, String reason);
+  Future<Either<Failure, void>> suspendSeller(String sellerId, String reason);
+  Future<Either<Failure, void>> reactivateSeller(String sellerId);
 }
 
 class SellerRepository implements ISellerRepository {
@@ -198,7 +200,7 @@ class SellerRepository implements ISellerRepository {
       final response = await _supabaseConfig.client
           .from('sellers')
           .select()
-          .eq('status', 'Unverified') // Assuming 'Unverified' is the status string based on requirements
+          .eq('status', 'unverified')
           .order('created_at', ascending: true);
 
       final sellers = (response as List).map((json) => Seller.fromJson(json)).toList();
@@ -288,4 +290,68 @@ class SellerRepository implements ISellerRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> suspendSeller(String sellerId, String reason) async {
+    try {
+      // Fetch seller to get user_id
+      final sellerResponse = await _supabaseConfig.client
+          .from('sellers')
+          .select('user_id')
+          .eq('id', sellerId)
+          .single();
+      
+      final userId = sellerResponse['user_id'] as String;
+      
+      // Update seller status to suspended
+      await _supabaseConfig.client
+          .from('sellers')
+          .update({'status': 'suspended'})
+          .eq('id', sellerId);
+
+      // Send suspension notification
+      if (_notificationService != null) {
+        await _notificationService!.notifySellerSuspension(
+          userId: userId,
+          reason: reason,
+        );
+      }
+      
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> reactivateSeller(String sellerId) async {
+    try {
+      // Fetch seller to get user_id
+      final sellerResponse = await _supabaseConfig.client
+          .from('sellers')
+          .select('user_id')
+          .eq('id', sellerId)
+          .single();
+      
+      final userId = sellerResponse['user_id'] as String;
+      
+      // Update seller status back to active
+      await _supabaseConfig.client
+          .from('sellers')
+          .update({'status': 'active'})
+          .eq('id', sellerId);
+
+      // Send reactivation notification
+      if (_notificationService != null) {
+        await _notificationService!.notifySellerReactivation(
+          userId: userId,
+        );
+      }
+      
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }
+

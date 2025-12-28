@@ -36,7 +36,12 @@ import 'package:vendora/features/seller/presentation/providers/category_provider
 import 'package:vendora/features/admin/presentation/providers/admin_orders_provider.dart';
 import 'package:vendora/features/admin/presentation/providers/dispute_provider.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_kyc_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/admin_kyc_provider.dart';
 import 'package:vendora/services/image_upload_service.dart';
+import 'package:vendora/features/common/data/repositories/support_repository.dart';
+import 'package:vendora/features/common/presentation/providers/support_provider.dart';
+import 'package:vendora/core/data/repositories/proposal_repository.dart';
+import 'package:vendora/features/common/providers/proposal_provider.dart';
 
 // ... existing imports ...
 
@@ -68,6 +73,7 @@ void main() async {
     final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
     final adminRepository = AdminRepositoryImpl(supabaseConfig: supabaseConfig);
     final categoryRepository = CategoryRepository(supabaseConfig: supabaseConfig);
+    final supportRepository = SupportRepository(supabaseConfig.client);
 
     runApp(
       MultiProvider(
@@ -149,6 +155,18 @@ void main() async {
           ChangeNotifierProvider(
             create: (_) => AdminKYCProvider(sellerRepository),
           ),
+          ChangeNotifierProvider(
+            create: (_) => SupportProvider(supportRepository),
+          ),
+          // Provide ProposalRepository and ProposalProvider
+          Provider<ProposalRepository>(
+            create: (_) => ProposalRepository(supabaseConfig: supabaseConfig),
+          ),
+          ChangeNotifierProvider(
+            create: (ctx) => ProposalProvider(
+              proposalRepository: ctx.read<ProposalRepository>(),
+            ),
+          ),
         ],
         child: VendoraApp(deepLinkService: deepLinkService),
       ),
@@ -199,9 +217,30 @@ class _VendoraAppState extends State<VendoraApp> {
         _handleAuthCallback();
       } else if (widget.deepLinkService.isPasswordResetCallback(uri)) {
         // Navigate to password reset screen
-        _navigatorKey.currentState?.pushNamed(AppRoutes.resetPassword);
+        // Remove until false effectively clears the stack (including splash)
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.resetPassword,
+          (route) => false,
+        );
       }
     });
+
+    // Check for pending initial link (cold start)
+    final pendingLink = widget.deepLinkService.pendingInitialLink;
+    if (pendingLink != null) {
+      if (widget.deepLinkService.isAuthCallback(pendingLink)) {
+        _handleAuthCallback();
+      } else if (widget.deepLinkService.isPasswordResetCallback(pendingLink)) {
+        // Wait a small bit for navigator to be ready
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.resetPassword,
+            (route) => false,
+          );
+        });
+      }
+      widget.deepLinkService.clearPendingLink();
+    }
   }
 
   Future<void> _handleAuthCallback() async {
@@ -241,13 +280,18 @@ class _VendoraAppState extends State<VendoraApp> {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
+        // 🎨 Select theme based on user preference
+        final selectedTheme = themeProvider.isPurpleTheme 
+            ? AppTheme.purpleBuyerTheme 
+            : AppTheme.grayBuyerTheme;
+
         return MaterialApp(
           navigatorKey: _navigatorKey,
           title: 'Vendora',
           debugShowCheckedModeBanner: false,
 
-          // 🔥 Apply theme
-          theme: AppTheme.lightTheme.copyWith(
+          // 🔥 Apply theme dynamically based on ThemeProvider
+          theme: selectedTheme.copyWith(
             textTheme: GoogleFonts.poppinsTextTheme(),
           ),
 
@@ -256,6 +300,19 @@ class _VendoraAppState extends State<VendoraApp> {
           // Use splash initially, which will check auth and navigate accordingly
           initialRoute: AppRoutes.splash,
           onGenerateRoute: AppRoutes.generateRoute,
+          builder: (context, child) {
+            return WillPopScope(
+              onWillPop: () async {
+                final nav = _navigatorKey.currentState;
+                if (nav != null && nav.canPop()) {
+                  nav.pop();
+                  return false;
+                }
+                return false;
+              },
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
         );
       },
     );

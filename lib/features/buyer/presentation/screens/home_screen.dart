@@ -149,7 +149,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // AppColors.background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // body handles the content
       body: SafeArea(
         child: RefreshIndicator(
@@ -278,7 +278,24 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                           categories: provider.categories,
                           selectedCategoryId: provider.selectedCategoryId, // Updated to use ID
                           onCategorySelected: (categoryId) {
-                             provider.setCategory(categoryId);
+                            if (categoryId == 'All Items') {
+                              provider.setCategory(categoryId);
+                              return;
+                            }
+                            final category = provider.categories.firstWhere(
+                              (c) => c.id == categoryId,
+                              orElse: () => Category(
+                                id: categoryId,
+                                sellerId: '',
+                                name: 'Category',
+                                createdAt: DateTime.now(),
+                              ),
+                            );
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.buyerCategory,
+                              arguments: category,
+                            );
                           },
                         ),
                         if (provider.selectedCategoryId != 'All Items') ...[

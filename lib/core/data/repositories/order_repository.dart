@@ -16,6 +16,7 @@ abstract class IOrderRepository {
     required String addressId,
     required List<OrderItem> items,
     required String paymentMethod,
+    String? paymentProofUrl,
   });
 
   /// Get a single order by ID
@@ -65,6 +66,7 @@ class OrderRepository implements IOrderRepository {
     required String addressId,
     required List<OrderItem> items,
     required String paymentMethod,
+    String? paymentProofUrl,
   }) async {
     try {
       // Calculate order totals
@@ -125,6 +127,17 @@ class OrderRepository implements IOrderRepository {
         'note': 'Order created',
         'created_at': DateTime.now().toIso8601String(),
       });
+      
+      // If a payment proof screenshot was provided (e.g., JazzCash transfer),
+      // store it as a status note so sellers can see it without schema changes.
+      if (paymentProofUrl != null && paymentProofUrl.isNotEmpty) {
+        await _supabaseConfig.from('order_status_history').insert({
+          'order_id': orderId,
+          'status': OrderStatus.pending.name,
+          'note': 'payment_proof_url=$paymentProofUrl',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
 
       // Fetch complete order with items
       final order = await getOrderById(orderId);

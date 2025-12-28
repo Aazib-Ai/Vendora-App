@@ -106,7 +106,7 @@ class ProductDetailsDialog extends StatelessWidget {
                     ),
                   _InfoRow(
                     label: 'Price',
-                    value: 'Rs ${product.basePrice.toStringAsFixed(0)}',
+                    value: 'PKR ${product.basePrice.toStringAsFixed(0)}',
                   ),
                   if (product.discountPercentage != null)
                     _InfoRow(
@@ -218,7 +218,7 @@ class ProductDetailsDialog extends StatelessWidget {
                                 Text('Color: ${variant.color}'),
                               if (variant.material != null)
                                 Text('Material: ${variant.material}'),
-                              Text('Price: Rs ${variant.price.toStringAsFixed(0)}'),
+                              Text('Price: PKR ${variant.price.toStringAsFixed(0)}'),
                               Text(
                                 'Stock: ${variant.stockQuantity} units',
                                 style: TextStyle(

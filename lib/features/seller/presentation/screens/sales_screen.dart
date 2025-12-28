@@ -37,14 +37,14 @@ class SalesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Rs 500,000',
+                      'PKR 500,000',
                       style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _miniStat('This Month', 'Rs 50,000'),
+                        _miniStat('This Month', 'PKR 50,000'),
                         _miniStat('Orders', '45'),
                       ],
                     ),
@@ -98,7 +98,7 @@ class SalesScreen extends StatelessWidget {
                     title: const Text('Product Sale', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text('Order #${index + 1024}'),
                     trailing: const Text(
-                      'Rs 5,000',
+                      'PKR 5,000',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
                     ),
                   ),

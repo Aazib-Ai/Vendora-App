@@ -164,7 +164,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildRevenueOverview(dynamic analyticsData) {
-    final currencyFormatter = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(symbol: 'PKR ', decimalDigits: 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +403,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       );
     }
 
-    final currencyFormatter = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(symbol: 'PKR ', decimalDigits: 0);
 
     return Card(
       child: ListView.separated(
@@ -454,7 +454,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       );
     }
 
-    final currencyFormatter = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(symbol: 'PKR ', decimalDigits: 0);
 
     return Card(
       child: ListView.separated(
@@ -501,7 +501,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   Widget _buildCommissionTracking(dynamic commissionData) {
-    final currencyFormatter = NumberFormat.currency(symbol: 'Rs ', decimalDigits: 0);
+    final currencyFormatter = NumberFormat.currency(symbol: 'PKR ', decimalDigits: 0);
 
     return Column(
       children: [

@@ -23,6 +23,11 @@ class DeepLinkService {
   
   DeepLinkService(this._supabaseConfig);
   
+  Uri? _pendingInitialLink;
+  Uri? get pendingInitialLink => _pendingInitialLink;
+
+  void clearPendingLink() => _pendingInitialLink = null;
+
   /// Initialize the deep link listener.
   /// Call this once in main() after Supabase is initialized.
   Future<void> initialize() async {
@@ -30,6 +35,7 @@ class DeepLinkService {
     try {
       final initialLink = await _appLinks.getInitialLink();
       if (initialLink != null) {
+        _pendingInitialLink = initialLink;
         _handleDeepLink(initialLink);
       }
     } catch (e) {
@@ -54,20 +60,24 @@ class DeepLinkService {
   }
   
   /// Handle incoming deep link
-  void _handleDeepLink(Uri uri) {
+  Future<void> _handleDeepLink(Uri uri) async {
     if (kDebugMode) {
       print('DeepLinkService: Received deep link: $uri');
     }
     
-    // Broadcast the link for any listeners (e.g., navigation handler)
-    _deepLinkController.add(uri);
-    
-    // Handle Supabase auth callbacks
-    // Supabase sends links like: io.supabase.vendora://login-callback#access_token=...&refresh_token=...&type=signup
+    if (isPasswordResetCallback(uri)) {
+      await _handlePasswordResetCallback(uri);
+      _deepLinkController.add(uri);
+      return;
+    }
     if (uri.host == 'login-callback' || uri.path.contains('login-callback')) {
-      _handleAuthCallback(uri);
+      await _handleAuthCallback(uri);
+      _deepLinkController.add(uri);
     } else if (uri.host == 'reset-callback' || uri.path.contains('reset-callback')) {
-      _handlePasswordResetCallback(uri);
+      await _handlePasswordResetCallback(uri);
+      _deepLinkController.add(uri);
+    } else {
+      _deepLinkController.add(uri);
     }
   }
   
@@ -108,21 +118,34 @@ class DeepLinkService {
     }
   }
   
-  /// Handle password reset callback
   Future<void> _handlePasswordResetCallback(Uri uri) async {
     try {
-      final fragment = uri.fragment;
-      if (fragment.isEmpty) return;
-      
-      final params = Uri.splitQueryString(fragment);
-      final accessToken = params['access_token'];
-      final refreshToken = params['refresh_token'];
-      
-      if (accessToken != null && refreshToken != null) {
-        await _supabaseConfig.auth.setSession(refreshToken);
-        
+      // Check for code in query params (PKCE flow)
+      final code = uri.queryParameters['code'];
+      if (code != null) {
         if (kDebugMode) {
-          print('DeepLinkService: Password reset session set');
+          print('DeepLinkService: Exchanging code for session...');
+        }
+        await _supabaseConfig.auth.exchangeCodeForSession(code);
+        if (kDebugMode) {
+          print('DeepLinkService: Code exchanged successfully');
+        }
+        return;
+      }
+
+      // Check for fragment (Implicit flow)
+      final fragment = uri.fragment;
+      if (fragment.isNotEmpty) {
+        final params = Uri.splitQueryString(fragment);
+        final accessToken = params['access_token'];
+        final refreshToken = params['refresh_token'];
+        
+        if (accessToken != null && refreshToken != null) {
+          await _supabaseConfig.auth.setSession(refreshToken);
+          
+          if (kDebugMode) {
+            print('DeepLinkService: Password reset session set from fragment');
+          }
         }
       }
     } catch (e) {
@@ -134,6 +157,8 @@ class DeepLinkService {
   
   /// Check if a deep link is an auth callback
   bool isAuthCallback(Uri uri) {
+    if (isPasswordResetCallback(uri)) return false;
+
     return uri.host == 'login-callback' || 
            uri.path.contains('login-callback') ||
            uri.fragment.contains('access_token');
@@ -143,6 +168,7 @@ class DeepLinkService {
   bool isPasswordResetCallback(Uri uri) {
     return uri.host == 'reset-callback' || 
            uri.path.contains('reset-callback') ||
+           uri.queryParameters.containsKey('code') ||
            (uri.fragment.contains('type=recovery'));
   }
   

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vendora/core/theme/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,20 +16,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0.3,
-        foregroundColor: Colors.black,
+        foregroundColor: Theme.of(context).colorScheme.primary,
       ),
 
       body: ListView(
@@ -44,14 +45,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 35,
-                      backgroundColor: Colors.black,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       backgroundImage: user?.profileImageUrl != null
                           ? NetworkImage(user!.profileImageUrl!)
                           : null,
@@ -103,6 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _profileTile(
             icon: Icons.person_outline,
             label: "Edit Profile",
+            subtitle: "Update your name, email & password",
             onTap: () => _openEditProfileModal(),
           ),
 
@@ -120,18 +125,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _profileTile(
             icon: Icons.help_outline,
             label: "Help Center",
+            subtitle: "Find answers to your questions",
             onTap: () => Navigator.pushNamed(context, AppRoutes.helpCenter),
           ),
 
           _profileTile(
             icon: Icons.mail_outline,
             label: "Contact Us",
+            subtitle: "Get support from Vendora Team",
             onTap: () => Navigator.pushNamed(context, AppRoutes.contactUs),
           ),
 
           _profileTile(
             icon: Icons.report_problem_outlined,
             label: "Report a Problem",
+            subtitle: "Found a bug? Let us know",
             onTap: () => Navigator.pushNamed(context, AppRoutes.reportProblem),
           ),
 
@@ -186,17 +194,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: Colors.black87,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
   }
 
   // ==========================================================
-  // NORMAL TILE
+  // NORMAL TILE - Theme Aware (Like Settings Page)
+  // ==========================================================
+  // ==========================================================
+  // NORMAL TILE - Theme Aware (Like Settings Page)
   // ==========================================================
   Widget _profileTile({
     required IconData icon,
@@ -204,34 +215,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isPurple = themeProvider.isPurpleTheme;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
+        color: isPurple ? const Color(0xFF3A2AD8) : Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey.shade200,
-          child: Icon(icon, color: Colors.black87),
-        ),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: isPurple ? Colors.white24 : Colors.black12,
+                  child: Icon(
+                    icon,
+                    color: isPurple ? Colors.white : Colors.black87,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isPurple ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isPurple ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: isPurple ? Colors.white : Colors.black54,
+                ),
+              ],
+            ),
           ),
         ),
-        subtitle: subtitle != null
-            ? Text(
-          subtitle,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-        )
-            : null,
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
       ),
     );
   }
@@ -247,24 +292,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.red.shade200),
       ),
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.red.shade100,
-          child: Icon(icon, color: Colors.red),
-        ),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: Colors.red,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.red.shade100,
+                  child: Icon(icon, color: Colors.red, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        onTap: onTap,
       ),
     );
   }
@@ -316,29 +375,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
 
               // SAVE BUTTON
-              GestureDetector(
-                onTap: () {
-                  // TODO: Implement profile update via repository
-                  // For now, just close the modal
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile update coming soon!')),
+              ElevatedButton(
+                onPressed: () async {
+                  final ok = await context.read<AuthProvider>().updateProfile(
+                    name: nameCtrl.text.trim(),
+                    phone: phoneCtrl.text.trim(),
+                    address: addressCtrl.text.trim().isEmpty ? null : addressCtrl.text.trim(),
                   );
-                  Navigator.pop(modalContext);
+                  if (ok) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profile updated successfully')),
+                      );
+                    }
+                    Navigator.pop(modalContext);
+                  } else {
+                    if (mounted) {
+                      final err = context.read<AuthProvider>().errorMessage ?? 'Failed to update profile';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(err)),
+                      );
+                    }
+                  }
                 },
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  child: const Center(
-                    child: Text(
-                      "Save",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                ),
+                child: const Text(
+                  "Save",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -353,19 +422,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Reusable modal field
   Widget _editField(String hint, TextEditingController controller, {bool enabled = true}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: enabled ? Colors.grey.shade200 : Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: TextField(
-        controller: controller,
-        enabled: enabled,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: hint,
-        ),
+    return TextField(
+      controller: controller,
+      enabled: enabled,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: enabled ? null : Colors.grey.shade300,
       ),
     );
   }

@@ -330,7 +330,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Rs ${product.basePrice}",
+                      "PKR ${product.basePrice}",
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

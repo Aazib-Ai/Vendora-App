@@ -32,6 +32,7 @@ class AdminSellerProvider extends ChangeNotifier {
   int get totalCount => _sellers.length;
   int get pendingCount => _sellers.where((s) => s.status.toLowerCase() == 'pending' || s.status.toLowerCase() == 'unverified').length;
   int get approvedCount => _sellers.where((s) => s.status.toLowerCase() == 'active' || s.status.toLowerCase() == 'approved').length;
+  int get suspendedCount => _sellers.where((s) => s.status.toLowerCase() == 'suspended').length;
 
   void setFilter(String filter) {
     _selectedFilter = filter;
@@ -111,6 +112,58 @@ class AdminSellerProvider extends ChangeNotifier {
     );
   }
 
+  Future<bool> suspendSeller(String sellerId, String reason) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _sellerRepository.suspendSeller(sellerId, reason);
+
+    return result.fold(
+      (failure) {
+        _error = _mapFailureToMessage(failure);
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      },
+      (_) {
+        // Update local list - change status to suspended
+        final index = _sellers.indexWhere((s) => s.id == sellerId);
+        if (index != -1) {
+          _sellers[index] = _sellers[index].copyWith(status: 'suspended');
+        }
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
+  Future<bool> reactivateSeller(String sellerId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _sellerRepository.reactivateSeller(sellerId);
+
+    return result.fold(
+      (failure) {
+        _error = _mapFailureToMessage(failure);
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      },
+      (_) {
+        // Update local list - change status back to active
+        final index = _sellers.indexWhere((s) => s.id == sellerId);
+        if (index != -1) {
+          _sellers[index] = _sellers[index].copyWith(status: 'active');
+        }
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
   Future<void> refresh() async {
     await loadSellers();
   }
@@ -122,3 +175,4 @@ class AdminSellerProvider extends ChangeNotifier {
     return 'An unexpected error occurred';
   }
 }
+

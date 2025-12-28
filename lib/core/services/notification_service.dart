@@ -163,4 +163,33 @@ class NotificationService {
       },
     );
   }
+
+  /// Notify seller when their account is suspended
+  Future<Either<Failure, void>> notifySellerSuspension({
+    required String userId,
+    required String reason,
+  }) async {
+    return _notificationRepository.createNotification(
+      userId: userId,
+      type: NotificationType.sellerApproval,
+      title: 'Account Suspended',
+      body: 'Your seller account has been suspended. Reason: $reason',
+      data: {
+        'reason': reason,
+      },
+    );
+  }
+
+  /// Notify seller when their account is reactivated
+  Future<Either<Failure, void>> notifySellerReactivation({
+    required String userId,
+  }) async {
+    return _notificationRepository.createNotification(
+      userId: userId,
+      type: NotificationType.sellerApproval,
+      title: 'Account Reactivated',
+      body: 'Your seller account has been reactivated. You can now sell products again.',
+      data: {},
+    );
+  }
 }

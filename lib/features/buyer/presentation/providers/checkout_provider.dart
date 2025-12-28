@@ -17,8 +17,8 @@ class CheckoutProvider extends ChangeNotifier {
   // Payment methods
   static const List<String> paymentMethods = [
     'Cash on Delivery',
-    'Credit Card', // Placeholder
-    'PayPal',      // Placeholder
+    'JazzCash',
+    'Online Send',
   ];
 
   CheckoutProvider({
@@ -40,6 +40,7 @@ class CheckoutProvider extends ChangeNotifier {
     required String userId,
     required Address address,
     required List<CartItem> cartItems,
+    String? paymentProofUrl,
   }) async {
     if (cartItems.isEmpty) {
       _error = 'Cart is empty';
@@ -71,6 +72,7 @@ class CheckoutProvider extends ChangeNotifier {
       addressId: address.id,
       items: orderItems,
       paymentMethod: _paymentMethod,
+      paymentProofUrl: paymentProofUrl,
     );
 
     Order? createdOrder;

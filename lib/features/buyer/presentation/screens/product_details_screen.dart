@@ -343,18 +343,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          "\$${_currentPrice.toStringAsFixed(2)}",
+          "PKR ${_currentPrice.toStringAsFixed(0)}",
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Colors.black, // Primary color
+            color: Colors.black,
           ),
         ),
         if (widget.product.discountPercentage != null && widget.product.discountPercentage! > 0)
           Padding(
             padding: const EdgeInsets.only(left: 12, bottom: 4),
             child: Text(
-              "\$${widget.product.basePrice.toStringAsFixed(2)}", // Show base price struck through
+              "PKR ${widget.product.basePrice.toStringAsFixed(0)}",
               style: TextStyle(
                 fontSize: 16,
                 decoration: TextDecoration.lineThrough,
@@ -653,7 +653,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                   )
                 : Text(
-                    _isOutOfStock ? "Out of Stock" : "Add to Cart - \$${(_currentPrice * quantity).toStringAsFixed(2)}",
+                    _isOutOfStock ? "Out of Stock" : "Add to Cart - PKR ${(_currentPrice * quantity).toStringAsFixed(0)}",
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
             );

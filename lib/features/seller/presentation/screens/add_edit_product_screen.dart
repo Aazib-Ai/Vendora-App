@@ -231,7 +231,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           child: TextFormField(
                             controller: _priceController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(labelText: 'Base Price', prefixText: 'Rs ', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(labelText: 'Base Price', prefixText: 'PKR ', border: OutlineInputBorder()),
                             validator: (v) => v!.isEmpty ? 'Required' : null,
                           ),
                         ),

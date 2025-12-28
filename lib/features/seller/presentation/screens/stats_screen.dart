@@ -51,7 +51,7 @@ class StatsScreen extends StatelessWidget {
                     Expanded(
                       child: _StatCard(
                         title: 'Total Revenue',
-                        value: '\$${stats.netEarnings + stats.totalCommission}', // Gross
+                        value: 'PKR ${(stats.netEarnings + stats.totalCommission).toStringAsFixed(0)}', // Gross
                         icon: Icons.account_balance_wallet_outlined,
                         color: Colors.black,
                       ),
@@ -60,7 +60,7 @@ class StatsScreen extends StatelessWidget {
                     Expanded(
                       child: _StatCard(
                         title: 'Net Earnings',
-                        value: '\$${stats.netEarnings.toStringAsFixed(2)}',
+                        value: 'PKR ${stats.netEarnings.toStringAsFixed(2)}',
                         icon: Icons.monetization_on_outlined,
                         color: Colors.green,
                       ),
@@ -73,7 +73,7 @@ class StatsScreen extends StatelessWidget {
                     Expanded(
                       child: _StatCard(
                         title: 'Commission (10%)',
-                        value: '\$${stats.totalCommission.toStringAsFixed(2)}',
+                        value: 'PKR ${stats.totalCommission.toStringAsFixed(2)}',
                         icon: Icons.pie_chart_outline,
                         color: Colors.orange,
                       ),
@@ -100,7 +100,7 @@ class StatsScreen extends StatelessWidget {
                      Expanded(
                       child: _StatCard(
                         title: 'Sales Today',
-                        value: '\$${stats.salesToday.toStringAsFixed(2)}',
+                        value: 'PKR ${stats.salesToday.toStringAsFixed(2)}',
                         icon: Icons.today,
                         isSmallText: true,
                       ),

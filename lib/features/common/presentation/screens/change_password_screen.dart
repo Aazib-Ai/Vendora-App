@@ -105,7 +105,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   'Current Password',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    marginBottom: 8,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -138,7 +137,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   'New Password',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    marginBottom: 8,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -174,7 +172,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   'Confirm New Password',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    marginBottom: 8,
                   ),
                 ),
                 const SizedBox(height: 8),

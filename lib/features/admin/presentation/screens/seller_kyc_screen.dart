@@ -164,17 +164,29 @@ class _SellerKYCScreenState extends State<SellerKYCScreen> {
 
   List<Seller> _filterSellers(List<Seller> sellers) {
     if (_selectedFilter == 'All') return sellers;
-    
-    final filterStatus = _selectedFilter.toLowerCase();
-    return sellers.where((s) => s.status.toLowerCase() == filterStatus).toList();
+    final filter = _selectedFilter.toLowerCase();
+    final mappedStatus = _mapFilterToStatus(filter);
+    return sellers.where((s) => s.status.toLowerCase() == mappedStatus).toList();
   }
 
   int _getCountForFilter(String filter) {
     final sellers = context.watch<AdminKYCProvider>().unverifiedSellers;
     if (filter == 'All') return sellers.length;
-    
-    final filterStatus = filter.toLowerCase();
-    return sellers.where((s) => s.status.toLowerCase() == filterStatus).length;
+    final mappedStatus = _mapFilterToStatus(filter.toLowerCase());
+    return sellers.where((s) => s.status.toLowerCase() == mappedStatus).length;
+  }
+
+  String _mapFilterToStatus(String filter) {
+    switch (filter) {
+      case 'pending':
+        return 'unverified';
+      case 'approved':
+        return 'active';
+      case 'rejected':
+        return 'rejected';
+      default:
+        return filter;
+    }
   }
 }
 

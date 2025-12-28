@@ -69,6 +69,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully')),
             );
+            provider.updateLocalSeller(seller);
             Navigator.pop(context);
           }
         },
@@ -134,6 +135,30 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.changePassword),
                 icon: const Icon(Icons.lock_outline),
                 label: const Text('Change Password'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.contactUs),
+                icon: const Icon(Icons.mail_outline),
+                label: const Text('Contact Support'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.reportProblem),
+                icon: const Icon(Icons.bug_report_outlined),
+                label: const Text('Report a Problem'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

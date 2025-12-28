@@ -7,7 +7,7 @@ class Seller extends Equatable {
   final String businessCategory;
   final String description;
   final String whatsappNumber;
-  final String status; // 'pending', 'approved', 'rejected'
+  final String status; // 'unverified', 'active', 'rejected', 'suspended'
   final double totalSales;
   final double walletBalance;
   final DateTime createdAt;
@@ -25,9 +25,10 @@ class Seller extends Equatable {
     required this.createdAt,
   });
 
-  bool get isApproved => status == 'approved';
-  bool get isPending => status == 'pending';
+  bool get isApproved => status == 'active';
+  bool get isPending => status == 'unverified';
   bool get isRejected => status == 'rejected';
+  bool get isSuspended => status == 'suspended';
 
   factory Seller.fromJson(Map<String, dynamic> json) {
     return Seller(
@@ -37,7 +38,7 @@ class Seller extends Equatable {
       businessCategory: json['business_category'],
       description: json['description'] ?? '',
       whatsappNumber: json['whatsapp_number'] ?? '',
-      status: json['status'] ?? 'pending',
+      status: json['status'] ?? 'unverified',
       totalSales: (json['total_sales'] as num?)?.toDouble() ?? 0.0,
       walletBalance: (json['wallet_balance'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.parse(json['created_at']),

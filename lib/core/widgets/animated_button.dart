@@ -76,6 +76,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = widget.color ?? Theme.of(context).colorScheme.primary;
     return GestureDetector(
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
@@ -86,13 +87,11 @@ class _AnimatedButtonState extends State<AnimatedButton>
           width: widget.width ?? double.infinity,
           height: widget.height,
           decoration: BoxDecoration(
-            color: widget.isLoading
-                ? (widget.color ?? AppColors.primary).withValues(alpha: 0.7)
-                : widget.color ?? AppColors.primary,
+            color: widget.isLoading ? baseColor.withValues(alpha: 0.7) : baseColor,
             borderRadius: BorderRadius.circular(widget.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: (widget.color ?? AppColors.primary).withValues(alpha: 0.3),
+                color: baseColor.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

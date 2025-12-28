@@ -56,6 +56,8 @@ lib/
 How to run 
 
 flutter run -d emulator-5554
+
+flutter build apk --release
 ## Features
 
 ### Common Pages

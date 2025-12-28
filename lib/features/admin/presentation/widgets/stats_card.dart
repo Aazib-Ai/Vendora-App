@@ -107,11 +107,11 @@ class StatsCard extends StatelessWidget {
   /// Format currency values
   static String formatCurrency(double value) {
     if (value >= 1000000) {
-      return 'Rs ${(value / 1000000).toStringAsFixed(1)}M';
+      return 'PKR ${(value / 1000000).toStringAsFixed(1)}M';
     } else if (value >= 1000) {
-      return 'Rs ${(value / 1000).toStringAsFixed(1)}K';
+      return 'PKR ${(value / 1000).toStringAsFixed(1)}K';
     }
-    return 'Rs ${NumberFormat('#,###').format(value)}';
+    return 'PKR ${NumberFormat('#,###').format(value)}';
   }
 
   /// Format number values

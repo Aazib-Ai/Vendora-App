@@ -73,6 +73,16 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             _SettingsCardModern(
+              icon: Icons.bug_report_outlined,
+              title: "Report a Problem",
+              subtitle: "Found a bug? Let us know",
+              onTap: () => Navigator.pushNamed(context, AppRoutes.reportProblem),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            ),
+
+            const SizedBox(height: 16),
+
+            _SettingsCardModern(
               icon: Icons.info_outline,
               title: "About Vendora",
               subtitle: "Learn more about the platform",

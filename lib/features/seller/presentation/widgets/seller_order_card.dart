@@ -24,6 +24,15 @@ class SellerOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final proofUrl = order.statusHistory
+        .map((h) => h.note)
+        .whereType<String>()
+        .firstWhere(
+          (note) => note.startsWith('payment_proof_url='),
+          orElse: () => '',
+        )
+        .replaceFirst('payment_proof_url=', '');
+        
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
@@ -73,6 +82,45 @@ class SellerOrderCard extends StatelessWidget {
                     const Text('Customer', style: AppTypography.bodyMedium),
                   ],
                 ),
+                if (proofUrl.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      const Icon(Icons.receipt_long, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: AppSpacing.xs),
+                      const Text('Payment Proof:', style: AppTypography.bodyMedium),
+                      const SizedBox(width: AppSpacing.sm),
+                      OutlinedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Payment Screenshot'),
+                              content: SizedBox(
+                                width: 300,
+                                child: Image.network(
+                                  proofUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const SizedBox(
+                                    height: 180,
+                                    child: Center(child: Text('Unable to load screenshot')),
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: const Text('View'),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -109,14 +157,14 @@ class SellerOrderCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '${item.quantity} x ${NumberFormat.currency(symbol: 'Rs ').format(item.unitPrice)}',
+                              '${item.quantity} x ${NumberFormat.currency(symbol: 'PKR ').format(item.unitPrice)}',
                               style: AppTypography.caption,
                             ),
                           ],
                         ),
                       ),
                       Text(
-                        NumberFormat.currency(symbol: 'Rs ').format(item.totalPrice),
+                        NumberFormat.currency(symbol: 'PKR ').format(item.totalPrice),
                         style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -136,7 +184,7 @@ class SellerOrderCard extends StatelessWidget {
                   children: [
                     const Text('Total Amount', style: AppTypography.bodyMedium),
                     Text(
-                      NumberFormat.currency(symbol: 'Rs ').format(order.total),
+                      NumberFormat.currency(symbol: 'PKR ').format(order.total),
                       style: AppTypography.headingSmall.copyWith(color: AppColors.primary),
                     ),
                   ],

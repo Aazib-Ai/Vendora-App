@@ -61,11 +61,11 @@ class AuthRepository {
       }
 
       return Right(user);
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign up auth error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } on PostgrestException catch (e) {
       if (kDebugMode) {
         print('✗ Sign up database error: ${e.message}');
@@ -109,11 +109,11 @@ class AuthRepository {
         (failure) => Left(failure),
         (userData) => userData != null ? Right(userData) : const Left(AuthFailure('User not found', app_exceptions.AuthErrorType.userNotFound)),
       );
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign in error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Sign in error: $e');
@@ -133,11 +133,11 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Sign out error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Sign out error: $e');
@@ -161,11 +161,11 @@ class AuthRepository {
       }
 
       return const Right(null);
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
        if (kDebugMode) {
         print('✗ Resend verification error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Resend verification error: $e');
@@ -184,7 +184,7 @@ class AuthRepository {
     try {
       final user = _supabaseConfig.auth.currentUser;
       if (user == null) {
-        return const Left(AuthFailure('No authenticated user'));
+        return const Left(AuthFailure('No authenticated user', app_exceptions.AuthErrorType.unknown));
       }
 
       // Verify current password by attempting re-authentication
@@ -194,7 +194,7 @@ class AuthRepository {
       );
 
       if (response.user == null) {
-        return const Left(AuthFailure('Current password is incorrect'));
+        return const Left(AuthFailure('Current password is incorrect', app_exceptions.AuthErrorType.invalidCredentials));
       }
 
       // Update to new password
@@ -211,7 +211,7 @@ class AuthRepository {
       if (kDebugMode) {
         print('✗ Change password error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Change password error: $e');
@@ -232,7 +232,7 @@ class AuthRepository {
         email,
         redirectTo: kIsWeb 
             ? null // Use default site URL for web
-            : 'io.supabase.vendora://login-callback', // Deep link for mobile
+            : 'io.supabase.vendora://reset-callback', // Deep link for mobile
       );
       
       if (kDebugMode) {
@@ -240,11 +240,11 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Password reset error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Password reset error: $e');
@@ -266,11 +266,11 @@ class AuthRepository {
       }
       
       return const Right(null);
-    } on app_exceptions.AuthException catch (e) {
+    } on AuthException catch (e) {
       if (kDebugMode) {
         print('✗ Update password error: ${e.message}');
       }
-      return Left(AuthFailure.fromException(e));
+      return Left(AuthFailure.fromException(app_exceptions.AuthException.fromSupabaseAuthError(e)));
     } catch (e) {
       if (kDebugMode) {
         print('✗ Update password error: $e');
@@ -317,6 +317,56 @@ class AuthRepository {
       if (kDebugMode) {
         print('✗ Get current user error: $e');
       }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  /// Update current user's profile (name, phone, address, profile image)
+  /// Requires an authenticated session due to RLS
+  Future<Either<Failure, app_models.User>> updateUserProfile({
+    required String name,
+    required String phone,
+    String? address,
+    String? profileImageUrl,
+  }) async {
+    try {
+      final authUser = _supabaseConfig.auth.currentUser;
+      if (authUser == null) {
+        return const Left(AuthFailure('No authenticated user', app_exceptions.AuthErrorType.unknown));
+      }
+
+      final updatePayload = <String, dynamic>{
+        'name': name,
+        'phone': phone,
+      };
+      if (address != null) {
+        updatePayload['address'] = address;
+      }
+      if (profileImageUrl != null) {
+        updatePayload['profile_image_url'] = profileImageUrl;
+      }
+
+      final response = await _supabaseConfig
+          .from('users')
+          .update(updatePayload)
+          .eq('id', authUser.id)
+          .select()
+          .single();
+
+      final updated = app_models.User(
+        id: response['id'] as String,
+        name: response['name'] as String,
+        email: response['email'] as String,
+        phone: response['phone'] as String,
+        role: response['role'] as String,
+        address: response['address'] as String?,
+        profileImageUrl: response['profile_image_url'] as String?,
+      );
+
+      return Right(updated);
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
   }

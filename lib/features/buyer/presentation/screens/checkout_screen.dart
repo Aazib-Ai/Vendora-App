@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:vendora/services/image_upload_service.dart';
 import 'package:vendora/core/routes/app_routes.dart';
 import 'package:vendora/features/buyer/presentation/providers/address_provider.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
@@ -15,6 +18,9 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  File? _paymentScreenshot;
+  bool _isUploadingProof = false;
+
   @override
   void initState() {
     super.initState();
@@ -45,10 +51,41 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    // If non-COD is selected, require a screenshot and upload it
+    String? proofUrl;
+    if (checkoutProvider.paymentMethod == 'JazzCash' || checkoutProvider.paymentMethod == 'Online Send') {
+      if (_paymentScreenshot == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please upload payment screenshot')),
+        );
+        return;
+      }
+      setState(() => _isUploadingProof = true);
+      final uploader = context.read<IImageUploadService>();
+      final result = await uploader.uploadImage(
+        file: _paymentScreenshot!,
+        bucket: 'payments',
+        path: 'orders/${user.id}',
+      );
+      result.fold(
+        (failure) {
+          setState(() => _isUploadingProof = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Upload failed: ${failure.message}')),
+          );
+          return;
+        },
+        (url) => proofUrl = url,
+      );
+      setState(() => _isUploadingProof = false);
+      if (proofUrl == null) return;
+    }
+
     final order = await checkoutProvider.placeOrder(
       userId: user.id,
       address: address,
       cartItems: cartItems,
+      paymentProofUrl: proofUrl,
     );
 
     if (order != null && mounted) {
@@ -170,6 +207,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     }).toList(),
                   ),
                 ),
+                if (checkoutProv.paymentMethod == 'JazzCash' || checkoutProv.paymentMethod == 'Online Send') ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Upload Payment Screenshot',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'After sending payment, upload the receipt/screenshot here.',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: _isUploadingProof
+                                    ? null
+                                    : () async {
+                                        final picker = ImagePicker();
+                                        final picked = await picker.pickImage(source: ImageSource.gallery);
+                                        if (picked != null) {
+                                          setState(() {
+                                            _paymentScreenshot = File(picked.path);
+                                          });
+                                        }
+                                      },
+                                child: const Text('Choose Screenshot'),
+                              ),
+                              const SizedBox(width: 12),
+                              if (_paymentScreenshot != null)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    _paymentScreenshot!,
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (_isUploadingProof) ...[
+                            const SizedBox(height: 12),
+                            const LinearProgressIndicator(minHeight: 2),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // STEP 3: Order Summary
@@ -195,7 +293,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               'Subtotal (${cartProv.items.length} items)',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
-                            Text('\$${cartProv.cartTotal.toStringAsFixed(2)}'),
+                            Text('PKR ${cartProv.cartTotal.toStringAsFixed(0)}'),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -203,7 +301,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                              Text('Shipping Fee', style: TextStyle(color: Colors.grey[600])),
-                             const Text('\$0.00'), // Free shipping for now or calc?
+                             const Text('PKR 0'), // Free shipping for now or calc?
                           ],
                         ),
                         const Divider(height: 24),
@@ -216,9 +314,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              '\$${cartProv.cartTotal.toStringAsFixed(2)}',
+                              'PKR ${cartProv.cartTotal.toStringAsFixed(0)}',
                               style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+                                  fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                             ),
                           ],
                         ),

@@ -121,6 +121,15 @@ class _ManageSellersScreenState extends State<ManageSellersScreen> {
               onTap: () => provider.setFilter('unverified'),
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _FilterTab(
+              label: 'Suspended',
+              count: provider.suspendedCount,
+              isSelected: provider.selectedFilter == 'suspended',
+              onTap: () => provider.setFilter('suspended'),
+            ),
+          ),
         ],
       ),
     );
@@ -156,6 +165,8 @@ class _ManageSellersScreenState extends State<ManageSellersScreen> {
             seller: seller,
             onApprove: () => _showApprovalDialog(seller),
             onReject: () => _showRejectionDialog(seller),
+            onSuspend: () => _showSuspensionDialog(seller),
+            onReactivate: () => _showReactivationDialog(seller),
           );
         },
       ),
@@ -275,6 +286,117 @@ class _ManageSellersScreenState extends State<ManageSellersScreen> {
       ),
     );
   }
+
+  void _showSuspensionDialog(Seller seller) {
+    final reasonController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Suspend Seller'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Please provide a reason for suspending ${seller.businessName}:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Enter suspension reason...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              final messenger = ScaffoldMessenger.of(context);
+              
+              if (reason.isEmpty) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Please provide a suspension reason'),
+                    backgroundColor: AppColors.warning,
+                  ),
+                );
+                return;
+              }
+              
+              Navigator.pop(dialogContext);
+              final success = await _provider.suspendSeller(seller.id, reason);
+              
+              if (mounted) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success 
+                          ? '${seller.businessName} suspended'
+                          : 'Failed to suspend seller',
+                    ),
+                    backgroundColor: success ? AppColors.warning : AppColors.error,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.warning,
+            ),
+            child: const Text('Suspend'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReactivationDialog(Seller seller) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Reactivate Seller'),
+        content: Text('Are you sure you want to reactivate ${seller.businessName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(dialogContext);
+              final success = await _provider.reactivateSeller(seller.id);
+              
+              if (mounted) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success 
+                          ? '${seller.businessName} reactivated successfully'
+                          : 'Failed to reactivate seller',
+                    ),
+                    backgroundColor: success ? AppColors.success : AppColors.error,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+            ),
+            child: const Text('Reactivate'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 
@@ -282,11 +404,15 @@ class _SellerCard extends StatelessWidget {
   final Seller seller;
   final VoidCallback onApprove;
   final VoidCallback onReject;
+  final VoidCallback onSuspend;
+  final VoidCallback onReactivate;
 
   const _SellerCard({
     required this.seller,
     required this.onApprove,
     required this.onReject,
+    required this.onSuspend,
+    required this.onReactivate,
   });
 
   @override
@@ -295,6 +421,7 @@ class _SellerCard extends StatelessWidget {
                        seller.status.toLowerCase() == 'approved';
     final isPending = seller.status.toLowerCase() == 'pending' || 
                       seller.status.toLowerCase() == 'unverified';
+    final isSuspended = seller.status.toLowerCase() == 'suspended';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -336,7 +463,9 @@ class _SellerCard extends StatelessWidget {
                           ? Colors.green[50] 
                           : isPending 
                               ? Colors.orange[50]
-                              : Colors.red[50],
+                              : isSuspended
+                                  ? Colors.amber[50]
+                                  : Colors.red[50],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -347,7 +476,9 @@ class _SellerCard extends StatelessWidget {
                             ? Colors.green[700] 
                             : isPending 
                                 ? Colors.orange[700]
-                                : Colors.red[700],
+                                : isSuspended
+                                    ? Colors.amber[900]
+                                    : Colors.red[700],
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -355,6 +486,7 @@ class _SellerCard extends StatelessWidget {
                 ],
               ),
             ),
+            // Action buttons based on status
             if (isPending) ...[
               IconButton(
                 icon: Container(
@@ -378,6 +510,32 @@ class _SellerCard extends StatelessWidget {
                 ),
                 onPressed: onReject,
               ),
+            ] else if (isApproved) ...[
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[600],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.block, color: Colors.white, size: 20),
+                ),
+                onPressed: onSuspend,
+                tooltip: 'Suspend Seller',
+              ),
+            ] else if (isSuspended) ...[
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                ),
+                onPressed: onReactivate,
+                tooltip: 'Reactivate Seller',
+              ),
             ] else ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -386,7 +544,7 @@ class _SellerCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  isApproved ? 'Active' : 'Rejected',
+                  'Rejected',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,

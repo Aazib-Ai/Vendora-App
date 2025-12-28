@@ -35,18 +35,18 @@ class _CartScreenState extends State<CartScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: Colors.white, // Keep it clean
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: widget.isTab ? null : InkWell(
           onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.arrow_back, color: Colors.black),
+          child: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
         ),
         automaticallyImplyLeading: !widget.isTab,
         elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        title: Text(
           "My Cart",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+          style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -231,7 +231,7 @@ class _CartScreenState extends State<CartScreen> {
                 fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
               )),
           Text(
-            value == 0 && label == "Shipping Fee" ? "FREE" : "Rs ${value.toStringAsFixed(0)}",
+            value == 0 && label == "Shipping Fee" ? "FREE" : "PKR ${value.toStringAsFixed(0)}",
             style: TextStyle(
               fontSize: 14,
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
@@ -332,7 +332,7 @@ class _CartItemWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Rs ${item.unitPrice.toStringAsFixed(0)}",
+                      "PKR ${item.unitPrice.toStringAsFixed(0)}",
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold),
                     ),

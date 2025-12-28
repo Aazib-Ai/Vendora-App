@@ -244,6 +244,37 @@ class AuthProvider with ChangeNotifier {
     return result.isRight();
   }
 
+  /// Update current user's profile
+  Future<bool> updateProfile({
+    required String name,
+    required String phone,
+    String? address,
+    String? profileImageUrl,
+  }) async {
+    _setState(AuthState.loading);
+    _errorMessage = null;
+
+    final result = await _authRepository.updateUserProfile(
+      name: name,
+      phone: phone,
+      address: address,
+      profileImageUrl: profileImageUrl,
+    );
+
+    return result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+        _setState(AuthState.error);
+        return false;
+      },
+      (user) {
+        _currentUser = user;
+        _setState(AuthState.authenticated);
+        return true;
+      },
+    );
+  }
+
   /// Reload current user (to check verification status)
   Future<void> reloadUser() async {
     // First refresh the Supabase session to get updated email verification status
