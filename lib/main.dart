@@ -33,6 +33,8 @@ import 'package:vendora/features/admin/presentation/providers/product_moderation
 import 'package:vendora/features/admin/domain/repositories/admin_repository.dart';
 import 'package:vendora/core/data/repositories/category_repository.dart';
 import 'package:vendora/features/seller/presentation/providers/category_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/admin_orders_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/dispute_provider.dart';
 import 'package:vendora/services/image_upload_service.dart';
 
 void main() async {
@@ -131,6 +133,12 @@ void main() async {
             productRepository: productRepository,
             adminRepository: adminRepository,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AdminOrdersProvider(orderRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => DisputeProvider(adminRepository: adminRepository),
         ),
       ],
       child: VendoraApp(deepLinkService: deepLinkService),

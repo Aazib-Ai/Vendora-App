@@ -415,6 +415,11 @@ class OrderRepository implements IOrderRepository {
           ));
         },
       );
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   @override
   Future<Either<Failure, List<Order>>> getAllOrders() async {
     try {

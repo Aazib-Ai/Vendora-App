@@ -44,6 +44,8 @@ import 'package:vendora/features/admin/presentation/screens/manage_products_scre
 import 'package:vendora/features/admin/presentation/screens/manage_users_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/manage_admins_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/analytics_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/manage_orders_screen.dart';
+import 'package:vendora/features/admin/presentation/screens/dispute_center_screen.dart';
 
 // REQUIRED MODEL
 import 'package:vendora/models/product.dart';
@@ -93,6 +95,8 @@ class AppRoutes {
   static const String manageUsers = '/admin/manage-users';
   static const String manageAdmins = '/admin/manage-admins';
   static const String analytics = '/admin/analytics';
+  static const String manageOrders = '/admin/manage-orders';
+  static const String disputeCenter = '/admin/dispute-center';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -178,6 +182,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ManageAdminsScreen());
       case analytics:
         return MaterialPageRoute(builder: (_) => const AnalyticsScreen());
+      case manageOrders:
+        return MaterialPageRoute(builder: (_) => const ManageOrdersScreen());
+      case disputeCenter:
+        return MaterialPageRoute(builder: (_) => const DisputeCenterScreen());
 
       default:
         return MaterialPageRoute(

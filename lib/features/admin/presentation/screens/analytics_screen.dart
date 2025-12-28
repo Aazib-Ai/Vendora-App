@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:vendora/features/admin/data/repositories/admin_repository_impl.dart';
+import 'package:vendora/features/admin/domain/repositories/admin_repository.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_analytics_provider.dart';
 
 class AnalyticsScreen extends StatefulWidget {
@@ -18,7 +18,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    _provider = AdminAnalyticsProvider(AdminRepositoryImpl());
+    _provider = AdminAnalyticsProvider(context.read<IAdminRepository>());
     _provider.fetchAnalytics();
   }
 

@@ -9,6 +9,8 @@ import 'package:vendora/features/admin/presentation/screens/manage_sellers_scree
 import 'package:vendora/features/admin/presentation/screens/manage_products_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/manage_users_screen.dart';
 import 'package:vendora/features/admin/presentation/screens/seller_kyc_screen.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vendora/core/routes/app_routes.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -65,6 +67,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
             onPressed: () {
               // TODO: Navigate to notifications
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Sign Out'),
+                  content: const Text('Are you sure you want to sign out?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true && context.mounted) {
+                await context.read<AuthProvider>().signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+                }
+              }
             },
           ),
         ],
@@ -252,12 +283,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         message: 'disputes need resolution',
                         count: stats.activeDisputes,
                         onTap: () {
-                          // TODO: Navigate to disputes screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Dispute center coming soon'),
-                            ),
-                          );
+                          Navigator.pushNamed(context, AppRoutes.disputeCenter);
                         },
                       ),
                     ),
@@ -345,36 +371,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: Icons.shopping_bag_outlined,
                       label: 'Orders',
                       onTap: () {
-                        // TODO: Navigate to orders screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Orders screen coming soon'),
-                          ),
-                        );
+                        Navigator.pushNamed(context, AppRoutes.manageOrders);
                       },
                     ),
                     _QuickActionCard(
                       icon: Icons.gavel_outlined,
                       label: 'Disputes',
                       onTap: () {
-                        // TODO: Navigate to disputes screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Dispute center coming soon'),
-                          ),
-                        );
+                        Navigator.pushNamed(context, AppRoutes.disputeCenter);
                       },
                     ),
                     _QuickActionCard(
                       icon: Icons.analytics_outlined,
                       label: 'Analytics',
                       onTap: () {
-                        // TODO: Navigate to analytics screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Analytics screen coming soon'),
-                          ),
-                        );
+                        Navigator.pushNamed(context, AppRoutes.analytics);
                       },
                     ),
                   ],

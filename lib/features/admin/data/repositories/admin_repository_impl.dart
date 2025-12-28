@@ -59,6 +59,53 @@ class AdminRepositoryImpl implements IAdminRepository {
         platformEarnings += (order['platform_commission'] as num).toDouble();
       }
 
+      // Fetch actual counts for alerts
+      final pendingSellersCount = await _supabaseConfig.client
+          .from('sellers')
+          .count(CountOption.exact)
+          .eq('status', 'unverified');
+
+      final pendingProductsCount = await _supabaseConfig.client
+          .from('products')
+          .count(CountOption.exact)
+          .eq('status', 'pending');
+
+      final activeDisputesCount = await _supabaseConfig.client
+          .from('disputes')
+          .count(CountOption.exact)
+          .eq('status', 'open');
+
+      final reportedProductsCount = await _supabaseConfig.client
+          .from('products')
+          .count(CountOption.exact)
+          .eq('is_active', true)
+          .eq('status', 'reported'); // Assuming reported is a status or flag
+
+      // Calculate revenue trend (last 7 days)
+      final now = DateTime.now();
+      final last7Days = List.generate(7, (index) {
+        final date = now.subtract(Duration(days: 6 - index));
+        return '${date.year}-${date.month}-${date.day}';
+      });
+      
+      final trendData = await _supabaseConfig.client
+          .from('orders')
+          .select('created_at, platform_commission')
+          .gte('created_at', now.subtract(const Duration(days: 7)).toIso8601String())
+          .order('created_at');
+
+      final Map<String, double> dailyRevenue = {};
+      for (final order in trendData) {
+        final date = DateTime.parse(order['created_at'] as String);
+        final dateKey = '${date.year}-${date.month}-${date.day}';
+        final commission = (order['platform_commission'] as num).toDouble();
+        dailyRevenue[dateKey] = (dailyRevenue[dateKey] ?? 0) + commission;
+      }
+
+      final List<double> revenueTrend = last7Days.map((dateKey) {
+        return dailyRevenue[dateKey] ?? 0.0;
+      }).toList();
+
       return Right(AdminStats(
         totalUsers: usersCount,
         totalSellers: sellersCount,
@@ -66,11 +113,11 @@ class AdminRepositoryImpl implements IAdminRepository {
         totalOrders: ordersCount,
         totalRevenue: totalRevenue,
         totalEarnings: platformEarnings,
-        pendingSellers: 0, // TODO: Fetch actual count
-        pendingProducts: 0, // TODO: Fetch actual count
-        activeDisputes: 0, // TODO: Fetch actual count
-        reportedProducts: 0, // TODO: Fetch actual count
-        revenueTrend: [], // TODO: Calculate revenue trend
+        pendingSellers: pendingSellersCount,
+        pendingProducts: pendingProductsCount,
+        activeDisputes: activeDisputesCount,
+        reportedProducts: reportedProductsCount,
+        revenueTrend: revenueTrend,
       ));
     } on PostgrestException catch (e) {
       return Left(ServerFailure(e.message));
