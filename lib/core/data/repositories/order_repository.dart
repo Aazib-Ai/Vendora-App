@@ -41,6 +41,10 @@ abstract class IOrderRepository {
   /// Get seller dashboard stats
   /// Requirements: 18.2
   Future<Either<Failure, SellerStats>> getSellerStats(String sellerId);
+
+  /// Get all orders for platform administration
+  /// Requirements: 8.1
+  Future<Either<Failure, List<Order>>> getAllOrders();
 }
 
 /// Concrete implementation of order repository using Supabase
@@ -411,6 +415,37 @@ class OrderRepository implements IOrderRepository {
           ));
         },
       );
+  @override
+  Future<Either<Failure, List<Order>>> getAllOrders() async {
+    try {
+      final response = await _supabaseConfig.from('orders').select('''
+        *,
+        order_items(
+          id,
+          order_id,
+          product_id,
+          product_name,
+          quantity,
+          unit_price,
+          total_price,
+          seller_id
+        ),
+        order_status_history(
+          id,
+          order_id,
+          status,
+          note,
+          created_at
+        )
+      ''').order('created_at', ascending: false);
+
+      final orders = (response as List)
+          .map((json) => Order.fromJson(json as Map<String, dynamic>))
+          .toList();
+
+      return Right(orders);
+    } on PostgrestException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

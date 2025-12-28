@@ -28,8 +28,12 @@ import 'package:vendora/core/data/repositories/order_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
 import 'package:vendora/features/admin/data/repositories/admin_repository_impl.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_dashboard_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/admin_seller_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/product_moderation_provider.dart';
+import 'package:vendora/features/admin/domain/repositories/admin_repository.dart';
 import 'package:vendora/core/data/repositories/category_repository.dart';
 import 'package:vendora/features/seller/presentation/providers/category_provider.dart';
+import 'package:vendora/services/image_upload_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,15 +104,34 @@ void main() async {
         Provider<ProductRepository>.value(value: productRepository),
         // Provide OrderRepository for seller dashboard and other screens
         Provider<OrderRepository>.value(value: orderRepository),
+        // Provide IImageUploadService for product and category image uploads
+        Provider<IImageUploadService>(
+          create: (_) => MockImageUploadService(), // Use MockImageUploadService until R2 Edge Functions are deployed
+        ),
         // Provide CategoryRepository and CategoryProvider for seller category management
         Provider<CategoryRepository>.value(value: categoryRepository),
         ChangeNotifierProvider(
-          create: (_) => CategoryProvider(categoryRepository: categoryRepository),
+          create: (ctx) => CategoryProvider(
+            categoryRepository: categoryRepository,
+            imageUploadService: ctx.read<IImageUploadService>(),
+          ),
         ),
         // Provide SellerRepository for seller profile operations
         Provider<SellerRepository>.value(value: sellerRepository),
         // Provide deep link service for navigation handling
         Provider<DeepLinkService>.value(value: deepLinkService),
+        
+        // Admin Providers
+        Provider<IAdminRepository>.value(value: adminRepository),
+        ChangeNotifierProvider(
+          create: (_) => AdminSellerProvider(sellerRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ProductModerationProvider(
+            productRepository: productRepository,
+            adminRepository: adminRepository,
+          ),
+        ),
       ],
       child: VendoraApp(deepLinkService: deepLinkService),
     ),

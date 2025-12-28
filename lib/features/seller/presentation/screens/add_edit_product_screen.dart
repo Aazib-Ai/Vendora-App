@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../models/product.dart';
+import '../../../../models/category_model.dart';
 import '../providers/product_form_provider.dart';
+import '../providers/seller_dashboard_provider.dart';
+import '../providers/category_provider.dart';
 import '../widgets/product_image_picker.dart';
 import '../widgets/product_variant_form.dart';
 
@@ -24,7 +26,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   late TextEditingController _priceController;
   late TextEditingController _stockController;
   late TextEditingController _discountController;
-  late TextEditingController _categoryController; // Simple text for now, should be dropdown
+  
+  // Category selection
+  String? _selectedCategoryId;
   
   DateTime? _discountValidUntil;
 
@@ -38,15 +42,21 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _priceController = TextEditingController(text: p?.basePrice.toString() ?? '');
     _stockController = TextEditingController(text: p?.stockQuantity.toString() ?? '');
     _discountController = TextEditingController(text: p?.discountPercentage?.toString() ?? '');
-    _categoryController = TextEditingController(text: p?.categoryId ?? '');
+    _selectedCategoryId = p?.categoryId;
     _discountValidUntil = p?.discountValidUntil;
 
-    // Initialize provider if editing
+    // Initialize provider if editing and load categories
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<ProductFormProvider>(context, listen: false);
       provider.reset();
       if (p != null) {
         provider.initializeForEdit(p);
+      }
+      
+      // Load categories for dropdown
+      final sellerId = context.read<SellerDashboardProvider>().currentSeller?.id;
+      if (sellerId != null) {
+        context.read<CategoryProvider>().loadCategories(sellerId);
       }
     });
   }
@@ -58,7 +68,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _priceController.dispose();
     _stockController.dispose();
     _discountController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -84,8 +93,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         return;
       }
 
-      // Get actual seller ID from AuthProvider
-      final sellerId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+      // Get actual seller ID from SellerDashboardProvider
+      final sellerId = Provider.of<SellerDashboardProvider>(context, listen: false).currentSeller?.id;
       if (sellerId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error: User not logged in')),
@@ -98,7 +107,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         productId: widget.product?.id,
         name: _nameController.text,
         description: _descController.text,
-        categoryId: _categoryController.text,
+        categoryId: _selectedCategoryId ?? '',
         basePrice: double.parse(_priceController.text),
         stockQuantity: int.parse(_stockController.text),
         discountPercentage: double.tryParse(_discountController.text),
@@ -161,10 +170,52 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _categoryController,
-                      decoration: const InputDecoration(labelText: 'Category ID (Placeholder)', border: OutlineInputBorder()),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                    // Category Dropdown
+                    Consumer<CategoryProvider>(
+                      builder: (context, catProvider, _) {
+                        final categories = catProvider.categories;
+                        return DropdownButtonFormField<String>(
+                          value: _selectedCategoryId,
+                          decoration: const InputDecoration(
+                            labelText: 'Category',
+                            border: OutlineInputBorder(),
+                          ),
+                          hint: const Text('Select a category'),
+                          validator: (v) => v == null || v.isEmpty ? 'Please select a category' : null,
+                          items: [
+                            ...categories.map((cat) => DropdownMenuItem<String>(
+                              value: cat.id,
+                              child: Row(
+                                children: [
+                                  if (cat.iconUrl != null && cat.iconUrl!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Image.network(
+                                          cat.iconUrl!,
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.category, size: 20),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 8),
+                                      child: Icon(Icons.category, size: 20, color: Colors.grey),
+                                    ),
+                                  Text(cat.name),
+                                ],
+                              ),
+                            )),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _selectedCategoryId = value);
+                          },
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 24),

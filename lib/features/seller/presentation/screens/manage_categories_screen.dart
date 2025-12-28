@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../models/category_model.dart';
 import '../providers/category_provider.dart';
+import '../providers/seller_dashboard_provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -14,15 +17,32 @@ class ManageCategoriesScreen extends StatefulWidget {
 class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   String searchQuery = "";
   final TextEditingController _nameController = TextEditingController();
+  bool _isLoadingSeller = false;
 
   @override
   void initState() {
     super.initState();
+    _initializeAndLoadCategories();
+  }
+
+  Future<void> _initializeAndLoadCategories() async {
+    final dashboardProvider = context.read<SellerDashboardProvider>();
+    
+    // If seller is not loaded, load it using auth provider's user ID
+    if (dashboardProvider.currentSeller == null) {
+      final userId = context.read<AuthProvider>().currentUser?.id;
+      if (userId != null) {
+        setState(() => _isLoadingSeller = true);
+        await dashboardProvider.loadDashboardData(userId);
+        setState(() => _isLoadingSeller = false);
+      }
+    }
+    
     _loadCategories();
   }
 
   void _loadCategories() {
-    final sellerId = context.read<AuthProvider>().currentUser?.id;
+    final sellerId = context.read<SellerDashboardProvider>().currentSeller?.id;
     if (sellerId != null) {
       context.read<CategoryProvider>().loadCategories(sellerId);
     }
@@ -56,6 +76,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
 
   void _showCategoryModal({Category? category}) {
     final bool isEditing = category != null;
+    File? selectedImage;
+    String? existingIconUrl = category?.iconUrl;
 
     if (isEditing) {
       _nameController.text = category.name;
@@ -67,66 +89,133 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(modalContext).viewInsets.bottom),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
-              const SizedBox(height: 20),
-              Text(isEditing ? "Edit Category" : "Add New Category", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 25),
-              _buildModalTextField("Category Name", _nameController, "e.g. Electronics"),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  minimumSize: const Size(double.infinity, 54),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      builder: (modalContext) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(modalContext).viewInsets.bottom),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)))),
+                const SizedBox(height: 20),
+                Text(isEditing ? "Edit Category" : "Add New Category", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 25),
+                
+                // Category Icon Picker
+                const Text("Category Icon (Optional)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54)),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+                    if (pickedFile != null) {
+                      setModalState(() {
+                        selectedImage = File(pickedFile.path);
+                        existingIconUrl = null; // Clear existing URL when new image selected
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: selectedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(selectedImage!, fit: BoxFit.cover),
+                          )
+                        : existingIconUrl != null && existingIconUrl!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(existingIconUrl!, fit: BoxFit.cover),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined, size: 32, color: Colors.grey.shade500),
+                                  const SizedBox(height: 4),
+                                  Text("Add Icon", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                ],
+                              ),
+                  ),
                 ),
-                onPressed: () async {
-                  if (_nameController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a category name')),
-                    );
-                    return;
-                  }
+                const SizedBox(height: 20),
+                
+                _buildModalTextField("Category Name", _nameController, "e.g. Electronics"),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    minimumSize: const Size(double.infinity, 54),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: () async {
+                    if (_nameController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a category name')),
+                      );
+                      return;
+                    }
 
-                  final sellerId = context.read<AuthProvider>().currentUser?.id;
-                  if (sellerId == null) return;
+                    final sellerId = this.context.read<SellerDashboardProvider>().currentSeller?.id;
+                    if (sellerId == null) {
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(content: Text('Error: Seller profile not loaded. Please go back and try again.')),
+                      );
+                      Navigator.pop(modalContext);
+                      return;
+                    }
 
-                  Navigator.pop(modalContext);
+                    // Store values before closing modal
+                    final name = _nameController.text.trim();
+                    final imageFile = selectedImage;
+                    final categoryProvider = this.context.read<CategoryProvider>();
+                    
+                    Navigator.pop(modalContext);
 
-                  bool success;
-                  if (isEditing) {
-                    success = await context.read<CategoryProvider>().updateCategory(
-                      id: category.id,
-                      name: _nameController.text.trim(),
-                    );
-                  } else {
-                    success = await context.read<CategoryProvider>().addCategory(
-                      sellerId: sellerId,
-                      name: _nameController.text.trim(),
-                    );
-                  }
+                    bool success;
+                    if (isEditing) {
+                      success = await categoryProvider.updateCategory(
+                        id: category.id,
+                        name: name,
+                        iconUrl: existingIconUrl,
+                      );
+                    } else {
+                      success = await categoryProvider.addCategory(
+                        sellerId: sellerId,
+                        name: name,
+                        iconFile: imageFile,
+                      );
+                    }
 
-                  if (mounted && success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(isEditing ? 'Category updated' : 'Category created')),
-                    );
-                  }
-                },
-                child: Text(isEditing ? "Update Category" : "Create Category", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 10),
-            ],
+                    if (mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(content: Text(isEditing ? 'Category updated' : 'Category created')),
+                        );
+                      } else {
+                        final error = categoryProvider.error ?? 'Unknown error';
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          SnackBar(content: Text('Failed: $error')),
+                        );
+                      }
+                    }
+                  },
+                  child: Text(isEditing ? "Update Category" : "Create Category", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         ),
       ),
@@ -193,7 +282,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: Consumer<CategoryProvider>(
+              child: _isLoadingSeller
+                  ? const Center(child: CircularProgressIndicator())
+                  : Consumer<CategoryProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading && provider.categories.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
@@ -255,8 +346,19 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         children: [
           Container(
             width: 50, height: 50,
-            decoration: BoxDecoration(color: Colors.grey[800], shape: BoxShape.circle),
-            child: const Icon(Icons.category_outlined, color: Colors.white70),
+            decoration: BoxDecoration(
+              color: Colors.grey[800], 
+              shape: BoxShape.circle,
+              image: category.iconUrl != null && category.iconUrl!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(category.iconUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: category.iconUrl == null || category.iconUrl!.isEmpty
+                ? const Icon(Icons.category_outlined, color: Colors.white70)
+                : null,
           ),
           const SizedBox(width: 18),
           Expanded(

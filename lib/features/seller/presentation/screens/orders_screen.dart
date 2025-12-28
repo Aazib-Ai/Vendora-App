@@ -5,7 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/data/repositories/order_repository.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/seller_dashboard_provider.dart';
 import '../providers/seller_orders_provider.dart';
 import '../widgets/seller_order_card.dart';
 
@@ -14,22 +14,22 @@ class SellerOrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access auth provider to get current user
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.currentUser;
+    // Access seller dashboard provider to get current seller
+    final sellerProvider = Provider.of<SellerDashboardProvider>(context, listen: false);
+    final seller = sellerProvider.currentSeller;
 
-    // Guard clause if user is not logged in
-    if (user == null) {
+    // Guard clause if seller is not logged in
+    if (seller == null) {
       return const Scaffold(
         body: Center(child: Text("Please login to view orders")),
       );
     }
 
-    // Initialize provider with dependencies
+    // Initialize provider with dependencies - use seller.id (from sellers table)
     return ChangeNotifierProvider(
       create: (_) => SellerOrdersProvider(
         orderRepository: context.read<OrderRepository>(),
-        sellerId: user.id,
+        sellerId: seller.id,
       )..fetchOrders(),
       child: const _SellerOrdersContent(),
     );

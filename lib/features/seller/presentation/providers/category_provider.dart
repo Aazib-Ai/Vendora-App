@@ -1,15 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/data/repositories/category_repository.dart';
 import '../../../../models/category_model.dart';
+import '../../../../services/image_upload_service.dart';
 
 enum CategoryStatus { idle, loading, success, error }
 
 /// Provider for managing category state in seller screens
 class CategoryProvider extends ChangeNotifier {
   final ICategoryRepository _categoryRepository;
+  final IImageUploadService? _imageUploadService;
 
-  CategoryProvider({required ICategoryRepository categoryRepository})
-      : _categoryRepository = categoryRepository;
+  CategoryProvider({
+    required ICategoryRepository categoryRepository,
+    IImageUploadService? imageUploadService,
+  })  : _categoryRepository = categoryRepository,
+        _imageUploadService = imageUploadService;
 
   // State
   List<Category> _categories = [];
@@ -44,21 +50,41 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Create a new category
+  /// Create a new category with optional image upload
   Future<bool> addCategory({
     required String sellerId,
     required String name,
     String? description,
     String? iconUrl,
+    File? iconFile,
   }) async {
     _status = CategoryStatus.loading;
     notifyListeners();
+
+    // Upload image if provided
+    String? uploadedIconUrl = iconUrl;
+    if (iconFile != null && _imageUploadService != null) {
+      final uploadResult = await _imageUploadService!.uploadImage(
+        file: iconFile,
+        bucket: 'categories',
+        path: '$sellerId/category-icons',
+      );
+      
+      final urlResult = uploadResult.fold(
+        (failure) => null,
+        (url) => url,
+      );
+      
+      if (urlResult != null) {
+        uploadedIconUrl = urlResult;
+      }
+    }
 
     final result = await _categoryRepository.createCategory(
       sellerId: sellerId,
       name: name,
       description: description,
-      iconUrl: iconUrl,
+      iconUrl: uploadedIconUrl,
     );
 
     return result.fold(

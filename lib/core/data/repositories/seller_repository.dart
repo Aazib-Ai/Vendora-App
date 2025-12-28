@@ -11,6 +11,7 @@ abstract class ISellerRepository {
   Future<Either<Failure, SellerStats>> getSellerStats(String sellerId);
   Future<Either<Failure, Seller>> updateSellerProfile(Seller seller);
   Future<Either<Failure, List<Seller>>> getUnverifiedSellers();
+  Future<Either<Failure, List<Seller>>> getAllSellers({String? statusFilter});
   Future<Either<Failure, void>> approveSeller(String sellerId);
   Future<Either<Failure, void>> rejectSeller(String sellerId, String reason);
 }
@@ -208,6 +209,26 @@ class SellerRepository implements ISellerRepository {
   }
 
   @override
+  Future<Either<Failure, List<Seller>>> getAllSellers({String? statusFilter}) async {
+    try {
+      PostgrestFilterBuilder query = _supabaseConfig.client
+          .from('sellers')
+          .select();
+
+      if (statusFilter != null && statusFilter.isNotEmpty && statusFilter.toLowerCase() != 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      final response = await query.order('created_at', ascending: false);
+
+      final sellers = (response as List).map((json) => Seller.fromJson(json)).toList();
+      return Right(sellers);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> approveSeller(String sellerId) async {
     try {
       // Fetch seller to get user_id
@@ -219,10 +240,10 @@ class SellerRepository implements ISellerRepository {
       
       final userId = sellerResponse['user_id'] as String;
       
-      // Update seller status
+      // Update seller status - use lowercase 'active' to match database constraint
       await _supabaseConfig.client
           .from('sellers')
-          .update({'status': 'Active'})
+          .update({'status': 'active'})
           .eq('id', sellerId);
       
       // Send approval notification
@@ -248,10 +269,10 @@ class SellerRepository implements ISellerRepository {
       
       final userId = sellerResponse['user_id'] as String;
       
-      // Update seller status
+      // Update seller status - use lowercase 'rejected' to match database constraint
       await _supabaseConfig.client
           .from('sellers')
-          .update({'status': 'Rejected'}) // We can't easily store reason without a schema change if columns don't exist
+          .update({'status': 'rejected'})
           .eq('id', sellerId);
 
       // Send rejection notification with reason
