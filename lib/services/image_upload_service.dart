@@ -71,7 +71,7 @@ class R2ImageUploadService implements IImageUploadService {
           useSSL: true,
         ),
         _bucketName = dotenv.env['R2_BUCKET_NAME'] ?? '',
-        _publicUrl = dotenv.env['R2_PUBLIC_URL'] ?? '';
+        _publicUrl = dotenv.env['R2_PUBLIC_DOMAIN'] ?? dotenv.env['R2_PUBLIC_URL'] ?? '';
 
   @override
   Future<Either<Failure, String>> uploadImage({
@@ -80,11 +80,18 @@ class R2ImageUploadService implements IImageUploadService {
     required String path,
   }) async {
     try {
-      // Step 0: Check configuration
-      if (dotenv.env['R2_ACCESS_KEY_ID'] == null ||
-          dotenv.env['R2_SECRET_ACCESS_KEY'] == null ||
-          dotenv.env['R2_ACCOUNT_ID'] == null) {
-        return Left(const ServerFailure('R2 credentials not found in .env'));
+      // Step 0: Check configuration with detailed error messages
+      final List<String> missingVars = [];
+      if (dotenv.env['R2_ACCESS_KEY_ID'] == null) missingVars.add('R2_ACCESS_KEY_ID');
+      if (dotenv.env['R2_SECRET_ACCESS_KEY'] == null) missingVars.add('R2_SECRET_ACCESS_KEY');
+      if (dotenv.env['R2_ACCOUNT_ID'] == null) missingVars.add('R2_ACCOUNT_ID');
+      if (dotenv.env['R2_BUCKET_NAME'] == null) missingVars.add('R2_BUCKET_NAME');
+      if (dotenv.env['R2_PUBLIC_DOMAIN'] == null && dotenv.env['R2_PUBLIC_URL'] == null) {
+        missingVars.add('R2_PUBLIC_DOMAIN');
+      }
+      
+      if (missingVars.isNotEmpty) {
+        return Left(ServerFailure('Missing R2 config in .env: ${missingVars.join(", ")}'));
       }
 
       // Step 1: Validate file
@@ -119,7 +126,7 @@ class R2ImageUploadService implements IImageUploadService {
       );
 
       // Step 4: Construct Public URL
-      // If R2_PUBLIC_URL is set (e.g. pub-xxxx.r2.dev or custom domain), use it.
+      // If R2_PUBLIC_DOMAIN is set (e.g. pub-xxxx.r2.dev or custom domain), use it.
       // properties: $publicUrl/$objectKey
       String finalUrl;
       if (_publicUrl.isNotEmpty) {
@@ -127,10 +134,16 @@ class R2ImageUploadService implements IImageUploadService {
         final cleanPublicUrl = _publicUrl.endsWith('/') 
             ? _publicUrl.substring(0, _publicUrl.length - 1) 
             : _publicUrl;
-        finalUrl = '$cleanPublicUrl/$objectKey';
+        
+        // Ensure the URL has https:// protocol prefix
+        String normalizedPublicUrl = cleanPublicUrl;
+        if (!cleanPublicUrl.startsWith('http://') && !cleanPublicUrl.startsWith('https://')) {
+          normalizedPublicUrl = 'https://$cleanPublicUrl';
+        }
+        finalUrl = '$normalizedPublicUrl/$objectKey';
       } else {
         // Fallback or error? For MVP we need the public URL.
-        return Left(const ServerFailure('R2_PUBLIC_URL not set in .env'));
+        return Left(const ServerFailure('R2_PUBLIC_DOMAIN not set in .env'));
       }
 
       return Right(finalUrl);
@@ -180,11 +193,14 @@ class R2ImageUploadService implements IImageUploadService {
   @override
   Future<Either<Failure, void>> deleteImage(String url) async {
     try {
-       // Check configuration
-      if (dotenv.env['R2_ACCESS_KEY_ID'] == null ||
-          dotenv.env['R2_SECRET_ACCESS_KEY'] == null ||
-          dotenv.env['R2_ACCOUNT_ID'] == null) {
-        return Left(const ServerFailure('R2 credentials not found in .env'));
+       // Check configuration with detailed messages
+      final List<String> missingVars = [];
+      if (dotenv.env['R2_ACCESS_KEY_ID'] == null) missingVars.add('R2_ACCESS_KEY_ID');
+      if (dotenv.env['R2_SECRET_ACCESS_KEY'] == null) missingVars.add('R2_SECRET_ACCESS_KEY');
+      if (dotenv.env['R2_ACCOUNT_ID'] == null) missingVars.add('R2_ACCOUNT_ID');
+      
+      if (missingVars.isNotEmpty) {
+        return Left(ServerFailure('Missing R2 config in .env: ${missingVars.join(", ")}'));
       }
       
       // Extract object key from public URL

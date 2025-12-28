@@ -189,12 +189,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               });
             },
             itemBuilder: (context, index) {
+              final imageUrl = images[index];
               return InteractiveViewer(
-                child: Image.asset( // Changed to Image.asset as per current data mock
-                  images[index],
-                  fit: BoxFit.cover,
-                  errorBuilder: (ctx, _, __) => const Center(child: Icon(Icons.image_not_supported)),
-                ),
+                child: imageUrl.startsWith('http')
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, _, __) => const Center(child: Icon(Icons.image_not_supported)),
+                      )
+                    : Image.asset(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, _, __) => const Center(child: Icon(Icons.image_not_supported)),
+                      ),
               );
             },
           ),

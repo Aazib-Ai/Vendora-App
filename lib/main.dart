@@ -88,7 +88,9 @@ void main() async {
           create: (_) => NotificationProvider(notificationRepository),
         ),
         ChangeNotifierProvider(
-          create: (_) => SellerDashboardProvider(sellerRepository),
+          create: (_) => SellerDashboardProvider(
+            sellerRepository: sellerRepository,
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => AddressProvider(addressRepository: addressRepository),

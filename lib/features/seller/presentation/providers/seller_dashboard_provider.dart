@@ -11,7 +11,9 @@ class SellerDashboardProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  SellerDashboardProvider(this._sellerRepository);
+  SellerDashboardProvider({
+    required SellerRepository sellerRepository,
+  })  : _sellerRepository = sellerRepository;
 
   Seller? get currentSeller => _currentSeller;
   SellerStats? get stats => _stats;
@@ -43,16 +45,12 @@ class SellerDashboardProvider with ChangeNotifier {
           statsResult.fold(
             (failure) {
                // Stats failed, but we have seller. Just show error or partial data?
-               // Let's log it but keep seller data
                _error = "Failed to load stats: ${failure.message}";
             },
             (stats) {
               _stats = stats;
             },
           );
-        } else {
-             // User is not a seller yet? logic elsewhere handles this?
-             // Or maybe "Unregistered" state.
         }
         
         _isLoading = false;
