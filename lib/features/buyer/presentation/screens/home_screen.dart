@@ -8,6 +8,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../models/product.dart';
 import '../../../../core/data/repositories/product_repository.dart';
 import '../providers/home_provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../widgets/hero_banner_carousel.dart';
 import '../widgets/category_quick_access.dart';
 import '../widgets/flash_deals_section.dart';
@@ -18,8 +19,8 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => HomeProvider(
-        productRepository: ProductRepository(),
+      create: (context) => HomeProvider(
+        productRepository: context.read<ProductRepository>(),
       )..loadInitialData(),
       child: const _HomeScreenContent(),
     );
@@ -189,31 +190,50 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // User Greeting
-                    Row(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              "Hello, Welcome 👋",
-                              style: TextStyle(fontSize: 13, color: Colors.black54),
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        final user = authProvider.currentUser;
+                        return Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Hello, Welcome 👋",
+                                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.name ?? "Guest",
+                                  style: const TextStyle(
+                                    fontSize: 19, 
+                                    fontWeight: FontWeight.w600
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              "Aryan Mirza", // Static for now as per demo
-                              style: TextStyle(
-                                fontSize: 19, 
-                                fontWeight: FontWeight.w600
-                              ),
+                            const Spacer(),
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.black,
+                              backgroundImage: user?.profileImageUrl != null 
+                                  ? NetworkImage(user!.profileImageUrl!) 
+                                  : null,
+                              child: user?.profileImageUrl == null
+                                  ? Text(
+                                      user?.name.isNotEmpty == true 
+                                          ? user!.name[0].toUpperCase() 
+                                          : "G",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ],
-                        ),
-                        const Spacer(),
-                        const CircleAvatar(
-                          radius: 22,
-                          backgroundImage: AssetImage("assets/images/profile.png"),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 25),
 

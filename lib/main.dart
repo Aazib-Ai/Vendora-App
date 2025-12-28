@@ -28,6 +28,8 @@ import 'package:vendora/core/data/repositories/order_repository.dart';
 import 'package:vendora/features/buyer/presentation/providers/checkout_provider.dart';
 import 'package:vendora/features/admin/data/repositories/admin_repository_impl.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_dashboard_provider.dart';
+import 'package:vendora/core/data/repositories/category_repository.dart';
+import 'package:vendora/features/seller/presentation/providers/category_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +57,7 @@ void main() async {
   final sellerRepository = SellerRepository(supabaseConfig: supabaseConfig);
   final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
   final adminRepository = AdminRepositoryImpl(supabaseConfig: supabaseConfig);
+  final categoryRepository = CategoryRepository(supabaseConfig: supabaseConfig);
 
   runApp(
     MultiProvider(
@@ -93,6 +96,10 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => AdminDashboardProvider(adminRepository),
         ),
+        // Provide ProductRepository for seller and buyer screens
+        Provider<ProductRepository>.value(value: productRepository),
+        // Provide OrderRepository for seller dashboard and other screens
+        Provider<OrderRepository>.value(value: orderRepository),
         // Provide deep link service for navigation handling
         Provider<DeepLinkService>.value(value: deepLinkService),
       ],

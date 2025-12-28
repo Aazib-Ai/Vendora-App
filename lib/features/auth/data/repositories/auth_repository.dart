@@ -30,6 +30,7 @@ class AuthRepository {
       final authResponse = await _supabaseConfig.auth.signUp(
         email: email,
         password: password,
+        emailRedirectTo: 'io.supabase.vendora://login-callback',
         data: {
           'name': name,
           'phone': phone,
@@ -152,6 +153,7 @@ class AuthRepository {
       await _supabaseConfig.auth.resend(
         type: OtpType.signup,
         email: email,
+        emailRedirectTo: 'io.supabase.vendora://login-callback',
       );
 
       if (kDebugMode) {
@@ -299,9 +301,29 @@ class AuthRepository {
     return _supabaseConfig.auth.onAuthStateChange;
   }
 
+  /// Refresh the current session to get updated user data (e.g., email verification status)
+  Future<void> refreshSession() async {
+    try {
+      await _supabaseConfig.auth.refreshSession();
+      if (kDebugMode) {
+        final user = _supabaseConfig.auth.currentUser;
+        print('✓ Session refreshed. Email confirmed at: ${user?.emailConfirmedAt}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Failed to refresh session: $e');
+      }
+    }
+  }
+
   /// Check if current user email is verified
   bool get isEmailVerified {
     final user = _supabaseConfig.auth.currentUser;
     return user?.emailConfirmedAt != null;
+  }
+
+  /// Check if there's an active authenticated session
+  bool get hasActiveSession {
+    return _supabaseConfig.auth.currentSession != null;
   }
 }

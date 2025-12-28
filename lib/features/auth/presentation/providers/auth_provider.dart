@@ -212,10 +212,24 @@ class AuthProvider with ChangeNotifier {
 
   /// Reload current user (to check verification status)
   Future<void> reloadUser() async {
-    await _authRepository.getCurrentUser(); // This refreshes local user model
-    // Also we might want to refresh the supabase auth session user
-    // The repository getCurrentUser fetches DB profile. 
-    // We also relies on _supabaseConfig.auth.currentUser for verification status.
+    // First refresh the Supabase session to get updated email verification status
+    await _authRepository.refreshSession();
+    
+    // Then refresh local user model from database and UPDATE state
+    final result = await _authRepository.getCurrentUser();
+    result.fold(
+      (failure) {
+        if (kDebugMode) {
+          print('Failed to reload user: ${failure.message}');
+        }
+      },
+      (user) {
+        if (user != null) {
+          _currentUser = user;
+          _loadSellerStatus();
+        }
+      },
+    );
     notifyListeners();
   }
 
@@ -235,6 +249,11 @@ class AuthProvider with ChangeNotifier {
   
   bool get isEmailVerified {
     return _authRepository.isEmailVerified;
+  }
+
+  /// Check if there's an active session (not just a cached user)
+  bool get hasActiveSession {
+    return _authRepository.hasActiveSession;
   }
 
   /// Get route name based on user role

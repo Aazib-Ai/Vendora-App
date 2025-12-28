@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../../models/category_model.dart';
+import '../providers/category_provider.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -9,32 +13,39 @@ class ManageCategoriesScreen extends StatefulWidget {
 
 class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   String searchQuery = "";
-
-  // Text Controllers for the Modal Form
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
 
-  // Mock data for Categories (Matching your Product style)
-  final List<Map<String, dynamic>> allCategories = [
-    {"name": "Jewellery", "description": "Rings, Necklaces, and more", "count": "12 Items"},
-    {"name": "Clothing", "description": "Modern and traditional wear", "count": "45 Items"},
-    {"name": "Books", "description": "Fiction, Educational, and Series", "count": "28 Items"},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
 
-  // --- DELETE CONFIRMATION ---
-  void _confirmDelete(int index, String categoryName) {
+  void _loadCategories() {
+    final sellerId = context.read<AuthProvider>().currentUser?.id;
+    if (sellerId != null) {
+      context.read<CategoryProvider>().loadCategories(sellerId);
+    }
+  }
+
+  void _confirmDelete(Category category) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text("Delete Category?"),
-        content: Text("Are you sure you want to delete '$categoryName'?"),
+        content: Text("Are you sure you want to delete '${category.name}'?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              setState(() => allCategories.removeAt(index));
+            onPressed: () async {
               Navigator.pop(context);
+              final success = await context.read<CategoryProvider>().deleteCategory(category.id);
+              if (mounted && success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Category deleted')),
+                );
+              }
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
@@ -43,24 +54,21 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     );
   }
 
-  // --- MODAL FOR ADD/EDIT CATEGORY ---
-  void _showCategoryModal({Map<String, dynamic>? category, int? index}) {
+  void _showCategoryModal({Category? category}) {
     final bool isEditing = category != null;
 
     if (isEditing) {
-      _nameController.text = category['name'];
-      _descController.text = category['description'];
+      _nameController.text = category.name;
     } else {
       _nameController.clear();
-      _descController.clear();
     }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      builder: (modalContext) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(modalContext).viewInsets.bottom),
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -75,10 +83,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
               const SizedBox(height: 20),
               Text(isEditing ? "Edit Category" : "Add New Category", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 25),
-
               _buildModalTextField("Category Name", _nameController, "e.g. Electronics"),
-              _buildModalTextField("Description", _descController, "Short description...", maxLines: 3),
-
               const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -86,20 +91,37 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                   minimumSize: const Size(double.infinity, 54),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                onPressed: () {
-                  setState(() {
-                    final data = {
-                      "name": _nameController.text,
-                      "description": _descController.text,
-                      "count": isEditing ? category['count'] : "0 Items",
-                    };
-                    if (isEditing) {
-                      allCategories[index!] = data;
-                    } else {
-                      allCategories.add(data);
-                    }
-                  });
-                  Navigator.pop(context);
+                onPressed: () async {
+                  if (_nameController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter a category name')),
+                    );
+                    return;
+                  }
+
+                  final sellerId = context.read<AuthProvider>().currentUser?.id;
+                  if (sellerId == null) return;
+
+                  Navigator.pop(modalContext);
+
+                  bool success;
+                  if (isEditing) {
+                    success = await context.read<CategoryProvider>().updateCategory(
+                      id: category.id,
+                      name: _nameController.text.trim(),
+                    );
+                  } else {
+                    success = await context.read<CategoryProvider>().addCategory(
+                      sellerId: sellerId,
+                      name: _nameController.text.trim(),
+                    );
+                  }
+
+                  if (mounted && success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(isEditing ? 'Category updated' : 'Category created')),
+                    );
+                  }
                 },
                 child: Text(isEditing ? "Update Category" : "Create Category", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
@@ -137,10 +159,6 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredCategories = allCategories.where((c) {
-      return c['name'].toLowerCase().contains(searchQuery.toLowerCase());
-    }).toList();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -158,7 +176,6 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            // SEARCH BAR - Matches Orders & Products
             TextField(
               onChanged: (v) => setState(() => searchQuery = v),
               decoration: InputDecoration(
@@ -176,11 +193,42 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredCategories.length,
-                itemBuilder: (context, index) {
-                  final category = filteredCategories[index];
-                  return _categoryListItem(category, allCategories.indexOf(category));
+              child: Consumer<CategoryProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoading && provider.categories.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (provider.error != null && provider.categories.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(provider.error!, style: const TextStyle(color: Colors.red)),
+                          const SizedBox(height: 16),
+                          TextButton(onPressed: _loadCategories, child: const Text('Retry')),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final filteredCategories = provider.categories.where((c) {
+                    return c.name.toLowerCase().contains(searchQuery.toLowerCase());
+                  }).toList();
+
+                  if (filteredCategories.isEmpty) {
+                    return const Center(
+                      child: Text("No categories yet. Tap + to add one!", style: TextStyle(color: Colors.grey)),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredCategories.length,
+                    itemBuilder: (context, index) {
+                      final category = filteredCategories[index];
+                      return _categoryListItem(category);
+                    },
+                  );
                 },
               ),
             ),
@@ -195,7 +243,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     );
   }
 
-  Widget _categoryListItem(Map<String, dynamic> category, int index) {
+  Widget _categoryListItem(Category category) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
@@ -205,7 +253,6 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       ),
       child: Row(
         children: [
-          // Icon Placeholder
           Container(
             width: 50, height: 50,
             decoration: BoxDecoration(color: Colors.grey[800], shape: BoxShape.circle),
@@ -219,12 +266,10 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(category['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(category['count'], style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
+                    Text(category.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text("${category.productCount} Items", style: const TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(category['description'], style: const TextStyle(color: Colors.white54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -233,14 +278,14 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       icon: const Icon(Icons.edit_note, color: Colors.white, size: 22),
-                      onPressed: () => _showCategoryModal(category: category, index: index),
+                      onPressed: () => _showCategoryModal(category: category),
                     ),
                     const SizedBox(width: 15),
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 22),
-                      onPressed: () => _confirmDelete(index, category['name']),
+                      onPressed: () => _confirmDelete(category),
                     ),
                   ],
                 ),

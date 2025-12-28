@@ -98,6 +98,10 @@ class ProductRepository implements IProductRepository {
         product_variants(id, sku, size, color, material, price, stock_quantity)
       ''');
 
+      // Filter for only approved and active products (for buyer visibility)
+      query = query.eq('status', 'approved');
+      query = query.eq('is_active', true);
+
       // Apply category filter
       if (category != null && category.isNotEmpty) {
         query = query.eq('category_id', category);

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:vendora/core/theme/app_colors.dart';
 import 'package:vendora/features/seller/presentation/providers/seller_dashboard_provider.dart';
 import 'package:vendora/core/data/repositories/seller_repository.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
+import 'package:vendora/core/routes/app_routes.dart';
 import '../../../../core/widgets/animated_button.dart';
 
 class SellerProfileScreen extends StatefulWidget {
@@ -127,10 +129,62 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 onPressed: _isLoading ? () {} : _saveProfile,
                 isLoading: _isLoading,
               ),
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => _showSignOutDialog(),
+                icon: const Icon(Icons.logout, color: Colors.red),
+                label: const Text(
+                  'Sign Out',
+                  style: TextStyle(color: Colors.red),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _showSignOutDialog() async {
+    final shouldSignOut = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Sign Out',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSignOut == true && mounted) {
+      await context.read<AuthProvider>().signOut();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          (route) => false,
+        );
+      }
+    }
   }
 }

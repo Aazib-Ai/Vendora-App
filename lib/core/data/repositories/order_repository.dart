@@ -276,10 +276,27 @@ class OrderRepository implements IOrderRepository {
   @override
   Future<Either<Failure, List<Order>>> getSellerOrders(String sellerId) async {
     try {
-      // Query orders that contain items from this seller
+      // Step 1: Get distinct order IDs from order_items for this seller
+      // This avoids the RLS infinite recursion issue with nested joins
+      final orderItemsResponse = await _supabaseConfig
+          .from('order_items')
+          .select('order_id')
+          .eq('seller_id', sellerId);
+
+      if ((orderItemsResponse as List).isEmpty) {
+        return const Right([]);
+      }
+
+      // Extract unique order IDs
+      final orderIds = (orderItemsResponse as List)
+          .map((item) => item['order_id'] as String)
+          .toSet()
+          .toList();
+
+      // Step 2: Fetch orders by IDs
       final response = await _supabaseConfig.from('orders').select('''
         *,
-        order_items!inner(
+        order_items(
           id,
           order_id,
           product_id,
@@ -296,7 +313,7 @@ class OrderRepository implements IOrderRepository {
           note,
           created_at
         )
-      ''').eq('order_items.seller_id', sellerId).order(
+      ''').inFilter('id', orderIds).order(
         'created_at',
         ascending: false,
       );

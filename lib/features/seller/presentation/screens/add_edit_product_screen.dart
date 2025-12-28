@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../models/product.dart';
 import '../providers/product_form_provider.dart';
 import '../widgets/product_image_picker.dart';
@@ -83,8 +84,14 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         return;
       }
 
-      // TODO: Get actual seller ID from AuthProvider
-      const sellerId = 'seller-123-placeholder'; 
+      // Get actual seller ID from AuthProvider
+      final sellerId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+      if (sellerId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: User not logged in')),
+        );
+        return;
+      }
 
       provider.saveProduct(
         sellerId: sellerId,

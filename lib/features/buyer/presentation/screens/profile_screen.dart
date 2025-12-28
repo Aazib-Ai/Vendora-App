@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
+import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -9,12 +11,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // TEMP USER DATA (Replace with real backend values later)
-  String userName = "Aryan Ijaz";
-  String userEmail = "aryan@example.com";
-  String phone = "0304-1234567";
-  String address = "Model Town";
-  String password = "password123";
 
   @override
   Widget build(BuildContext context) {
@@ -39,51 +35,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         children: [
           // ---------------- PROFILE HEADER ----------------
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Colors.black,
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : "U",
-                    style: const TextStyle(
-                      fontSize: 26,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, _) {
+              final user = authProvider.currentUser;
+              final userName = user?.name ?? "Guest";
+              final userEmail = user?.email ?? "";
+              
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Colors.black,
+                      backgroundImage: user?.profileImageUrl != null
+                          ? NetworkImage(user!.profileImageUrl!)
+                          : null,
+                      child: user?.profileImageUrl == null
+                          ? Text(
+                              userName.isNotEmpty ? userName[0].toUpperCase() : "G",
+                              style: const TextStyle(
+                                fontSize: 26,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
                     ),
-                  ),
-                ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            userEmail,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        userEmail,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
 
           const SizedBox(height: 30),
@@ -148,8 +157,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _logoutTile(
             icon: Icons.logout,
             label: "Logout",
-            onTap: () {
-              Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
+            onTap: () async {
+              await context.read<AuthProvider>().signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              }
             },
           ),
 
@@ -254,132 +266,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // EDIT PROFILE MODAL (BOTTOM SHEET)
   // ==========================================================
   void _openEditProfileModal() {
-    final nameCtrl = TextEditingController(text: userName);
-    final emailCtrl = TextEditingController(text: userEmail);
-    final phoneCtrl = TextEditingController(text: phone);
-    final addressCtrl = TextEditingController(text: address);
-    final passCtrl = TextEditingController(text: password);
-
-    bool hidePass = true;
+    final user = context.read<AuthProvider>().currentUser;
+    final nameCtrl = TextEditingController(text: user?.name ?? '');
+    final emailCtrl = TextEditingController(text: user?.email ?? '');
+    final phoneCtrl = TextEditingController(text: user?.phone ?? '');
+    final addressCtrl = TextEditingController(text: user?.address ?? '');
 
     showModalBottomSheet(
       isScrollControlled: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
+      builder: (modalContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Edit Profile",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _editField("Name", nameCtrl),
+              const SizedBox(height: 12),
+
+              _editField("Email", emailCtrl, enabled: false),
+              const SizedBox(height: 12),
+
+              _editField("Phone Number", phoneCtrl),
+              const SizedBox(height: 12),
+
+              _editField("Address", addressCtrl),
+              const SizedBox(height: 20),
+
+              // SAVE BUTTON
+              GestureDetector(
+                onTap: () {
+                  // TODO: Implement profile update via repository
+                  // For now, just close the modal
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile update coming soon!')),
+                  );
+                  Navigator.pop(modalContext);
+                },
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      "Save",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
               ),
 
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Edit Profile",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _editField("Name", nameCtrl),
-                  const SizedBox(height: 12),
-
-                  _editField("Email", emailCtrl),
-                  const SizedBox(height: 12),
-
-                  _editField("Phone Number", phoneCtrl),
-                  const SizedBox(height: 12),
-
-                  _editField("Address", addressCtrl),
-                  const SizedBox(height: 12),
-
-                  // PASSWORD FIELD WITH TOGGLE
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: TextField(
-                      controller: passCtrl,
-                      obscureText: hidePass,
-                      decoration: InputDecoration(
-                        hintText: "Password",
-                        border: InputBorder.none,
-                        suffixIcon: InkWell(
-                          onTap: () =>
-                              setModal(() => hidePass = !hidePass),
-                          child: Icon(
-                            hidePass
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // SAVE BUTTON
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        userName = nameCtrl.text;
-                        userEmail = emailCtrl.text;
-                        phone = phoneCtrl.text;
-                        address = addressCtrl.text;
-                        password = passCtrl.text;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Save",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
-              ),
-            );
-          },
+              const SizedBox(height: 20),
+            ],
+          ),
         );
       },
     );
   }
 
   // Reusable modal field
-  Widget _editField(String hint, TextEditingController controller) {
+  Widget _editField(String hint, TextEditingController controller, {bool enabled = true}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: enabled ? Colors.grey.shade200 : Colors.grey.shade300,
         borderRadius: BorderRadius.circular(40),
       ),
       child: TextField(
         controller: controller,
+        enabled: enabled,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,

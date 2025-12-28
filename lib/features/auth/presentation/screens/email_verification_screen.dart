@@ -93,10 +93,29 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     if (!mounted) return;
     setState(() => _isChecking = false);
 
-    if (authProvider.isEmailVerified) {
+    if (authProvider.isEmailVerified && authProvider.hasActiveSession) {
+      // User verified and session exists - navigate to home
       final route = authProvider.getHomeRouteForRole();
       Navigator.pushReplacementNamed(context, route);
+    } else if (!authProvider.hasActiveSession) {
+      // No active session - verification might have happened on different device
+      // Redirect to login so user can sign in with verified email
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Great! Please sign in with your verified email.'),
+          backgroundColor: Colors.green.shade600,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     } else {
+      // Session exists but email not verified yet
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Email not verified yet. Please check your inbox and spam folder.'),
