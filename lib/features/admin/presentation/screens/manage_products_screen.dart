@@ -51,12 +51,16 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       case 'Hidden':
         products = _provider.hiddenProducts;
         break;
+      case 'Reported':
+        products = _provider.reportedProducts;
+        break;
       default:
         products = [
           ..._provider.pendingProducts,
           ..._provider.approvedProducts,
           ..._provider.rejectedProducts,
           ..._provider.hiddenProducts,
+          ..._provider.reportedProducts,
         ];
     }
 
@@ -160,7 +164,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           _FilterTab(
             label: 'All',
             count: provider.pendingCount + provider.approvedCount + 
-                   provider.rejectedCount + provider.hiddenCount,
+                   provider.rejectedCount + provider.hiddenCount + provider.reportedCount,
             isSelected: _selectedFilter == 'All',
             onTap: () => setState(() => _selectedFilter = 'All'),
           ),
@@ -191,6 +195,13 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             count: provider.hiddenCount,
             isSelected: _selectedFilter == 'Hidden',
             onTap: () => setState(() => _selectedFilter = 'Hidden'),
+          ),
+          const SizedBox(width: 8),
+          _FilterTab(
+            label: 'Reported',
+            count: provider.reportedCount,
+            isSelected: _selectedFilter == 'Reported',
+            onTap: () => setState(() => _selectedFilter = 'Reported'),
           ),
         ],
       ),
@@ -267,7 +278,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                     content: Text(
                       success 
                           ? '${product.name} approved successfully'
-                          : 'Failed to approve product',
+                          : (_provider.error ?? 'Failed to approve product'),
                     ),
                     backgroundColor: success ? AppColors.success : AppColors.error,
                   ),
@@ -508,6 +519,14 @@ class _ProductCard extends StatelessWidget {
                     product.category,
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
+                  if (product.sellerName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Seller: ${product.sellerName}',
+                        style: TextStyle(color: Colors.blue[700], fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     product.formattedPrice,
@@ -609,6 +628,11 @@ class _ProductCard extends StatelessWidget {
           bgColor = Colors.red[50]!;
           textColor = Colors.red[700]!;
           label = 'Rejected';
+          break;
+        case ProductStatus.reported:
+          bgColor = Colors.purple[50]!;
+          textColor = Colors.purple[700]!;
+          label = 'Reported';
           break;
       }
     }

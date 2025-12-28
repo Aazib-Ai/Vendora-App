@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+import 'package:vendora/features/cart/presentation/providers/cart_provider.dart';
+
 enum NavigationRole { buyer, seller, admin }
 
 class CustomBottomNavigationBar extends StatelessWidget {
@@ -7,7 +10,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
   final Function(int) onTap;
   final NavigationRole role;
   final bool showNotifications;
-  final int pendingOrdersCount; // Added for the badge logic
+  final int pendingOrdersCount; // For seller use
 
   const CustomBottomNavigationBar({
     super.key,
@@ -15,7 +18,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     required this.onTap,
     this.role = NavigationRole.buyer,
     this.showNotifications = false,
-    this.pendingOrdersCount = 5, // Default mock value
+    this.pendingOrdersCount = 0,
   });
 
   @override
@@ -53,7 +56,17 @@ class CustomBottomNavigationBar extends StatelessWidget {
   List<Widget> _buildBuyerButtons(BuildContext context) {
     return [
       _navButton(index: 0, icon: Icons.notifications),
-      _navButton(index: 1, icon: Icons.shopping_bag),
+      // Cart Button with Badge
+      Consumer<CartProvider>(
+        builder: (context, cartProvider, child) {
+          return _navButton(
+            index: 1, 
+            icon: Icons.shopping_bag,
+            hasBadge: true,
+            badgeCount: cartProvider.itemCount
+          );
+        },
+      ),
       _centerLogoButton(), // Home
       _navButton(index: 3, icon: Icons.settings),
       _navButton(index: 4, icon: Icons.person),
@@ -67,6 +80,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         index: 0,
         icon: Icons.shopping_bag_outlined,
         hasBadge: true, // Enable badge for Orders
+        badgeCount: pendingOrdersCount,
       ),
       _navButton(index: 1, icon: Icons.inventory_2_outlined), // Products
       _centerLogoButton(), // Dashboard (Index 2)
@@ -91,6 +105,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     required int index,
     required IconData icon,
     bool hasBadge = false,
+    int badgeCount = 0,
   }) {
     final bool isActive = currentIndex == index;
 
@@ -114,8 +129,8 @@ class CustomBottomNavigationBar extends StatelessWidget {
               size: 26,
             ),
           ),
-          // RED BADGE FOR PENDING ORDERS
-          if (hasBadge && pendingOrdersCount > 0)
+          // RED BADGE
+          if (hasBadge && badgeCount > 0)
             Positioned(
               right: 0,
               top: 0,
@@ -130,7 +145,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   minHeight: 18,
                 ),
                 child: Text(
-                  '$pendingOrdersCount',
+                  '$badgeCount',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,

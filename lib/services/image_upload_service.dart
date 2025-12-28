@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data'; // Added for Uint8List
 import 'package:dartz/dartz.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:minio/minio.dart';
+import 'package:minio/models.dart'; // For MinioError if separate or standard exceptions
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../core/errors/failures.dart';
 
 /// Service for uploading images to Cloudflare R2 via Supabase Edge Functions
@@ -50,23 +53,40 @@ abstract class IImageUploadService {
 
 /// Implementation of IImageUploadService using Cloudflare R2 and Supabase Edge Functions
 class R2ImageUploadService implements IImageUploadService {
-  final SupabaseClient _supabase;
+  final Minio _minio;
+  final String _bucketName;
+  final String _publicUrl;
   final Uuid _uuid = const Uuid();
   
   // Validation constants from Requirements 3.6
   static const List<String> _allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
   static const int _maxFileSizeBytes = 10 * 1024 * 1024; // 10MB
 
-  R2ImageUploadService({required SupabaseClient supabase})
-      : _supabase = supabase;
+  R2ImageUploadService()
+      : _minio = Minio(
+          endPoint: '${dotenv.env['R2_ACCOUNT_ID'] ?? "missing-account-id"}.r2.cloudflarestorage.com',
+          accessKey: dotenv.env['R2_ACCESS_KEY_ID'] ?? '',
+          secretKey: dotenv.env['R2_SECRET_ACCESS_KEY'] ?? '',
+          region: 'auto',
+          useSSL: true,
+        ),
+        _bucketName = dotenv.env['R2_BUCKET_NAME'] ?? '',
+        _publicUrl = dotenv.env['R2_PUBLIC_URL'] ?? '';
 
   @override
   Future<Either<Failure, String>> uploadImage({
     required File file,
-    required String bucket,
+    required String bucket, // Argument 'bucket' is kept to satisfy interface, but we might prefer env bucket
     required String path,
   }) async {
     try {
+      // Step 0: Check configuration
+      if (dotenv.env['R2_ACCESS_KEY_ID'] == null ||
+          dotenv.env['R2_SECRET_ACCESS_KEY'] == null ||
+          dotenv.env['R2_ACCOUNT_ID'] == null) {
+        return Left(const ServerFailure('R2 credentials not found in .env'));
+      }
+
       // Step 1: Validate file
       final validationResult = _validateFile(file);
       if (validationResult != null) {
@@ -77,55 +97,48 @@ class R2ImageUploadService implements IImageUploadService {
       final extension = p.extension(file.path).toLowerCase().replaceFirst('.', '');
       final filename = '${_uuid.v4()}.$extension';
       final fullPath = '$path/$filename';
+      // Normalize path to remove leading slashes if any, Minio handles buckets separate from keys
+      final objectKey = fullPath.startsWith('/') ? fullPath.substring(1) : fullPath;
+      
+      // Use the bucket from env if available as primary, otherwise use the passed one (or fallback)
+      final actualBucket = _bucketName.isNotEmpty ? _bucketName : bucket;
 
-      // Step 3: Get presigned URL from Edge Function
-      final response = await _supabase.functions.invoke(
-        'generate-upload-url',
-        body: {
-          'bucket': bucket,
-          'path': fullPath,
-          'contentType': 'image/$extension',
-        },
+      // Step 3: Upload file to R2
+      final Stream<Uint8List> stream = file.openRead().map((chunk) => Uint8List.fromList(chunk));
+      final length = await file.length();
+
+      // Attempting upload
+      await _minio.putObject(
+        actualBucket,
+        objectKey,
+        stream,
+        size: length,
+        metadata: {
+          'content-type': 'image/$extension',
+        }
       );
 
-      if (response.status != 200) {
-        return Left(ServerFailure(
-          'Failed to generate upload URL: ${response.data}',
-        ));
+      // Step 4: Construct Public URL
+      // If R2_PUBLIC_URL is set (e.g. pub-xxxx.r2.dev or custom domain), use it.
+      // properties: $publicUrl/$objectKey
+      String finalUrl;
+      if (_publicUrl.isNotEmpty) {
+        // Remove trailing slash from public url if present
+        final cleanPublicUrl = _publicUrl.endsWith('/') 
+            ? _publicUrl.substring(0, _publicUrl.length - 1) 
+            : _publicUrl;
+        finalUrl = '$cleanPublicUrl/$objectKey';
+      } else {
+        // Fallback or error? For MVP we need the public URL.
+        return Left(const ServerFailure('R2_PUBLIC_URL not set in .env'));
       }
 
-      final presignedUrl = response.data['uploadUrl'] as String?;
-      final publicUrl = response.data['publicUrl'] as String?;
+      return Right(finalUrl);
 
-      if (presignedUrl == null || publicUrl == null) {
-        return Left(ServerFailure(
-          'Invalid response from upload URL generator',
-        ));
-      }
-
-      // Step 4: Upload file to R2 using presigned URL
-      final bytes = await file.readAsBytes();
-      final uploadResponse = await http.put(
-        Uri.parse(presignedUrl),
-        body: bytes,
-        headers: {
-          'Content-Type': 'image/$extension',
-          'Content-Length': bytes.length.toString(),
-        },
-      );
-
-      if (uploadResponse.statusCode != 200 && uploadResponse.statusCode != 201) {
-        return Left(ServerFailure(
-          'Failed to upload image: ${uploadResponse.statusCode} ${uploadResponse.reasonPhrase}',
-        ));
-      }
-
-      // Step 5: Return public URL
-      return Right(publicUrl);
+    } on MinioError catch (e) {
+      return Left(ServerFailure('R2 Error: ${e.message}'));
     } on SocketException catch (e) {
       return Left(NetworkFailure('Network error during upload: ${e.message}'));
-    } on FileSystemException catch (e) {
-      return Left(FileFailure('File system error: ${e.message}'));
     } catch (e) {
       return Left(ServerFailure('Unexpected error during upload: $e'));
     }
@@ -167,24 +180,42 @@ class R2ImageUploadService implements IImageUploadService {
   @override
   Future<Either<Failure, void>> deleteImage(String url) async {
     try {
+       // Check configuration
+      if (dotenv.env['R2_ACCESS_KEY_ID'] == null ||
+          dotenv.env['R2_SECRET_ACCESS_KEY'] == null ||
+          dotenv.env['R2_ACCOUNT_ID'] == null) {
+        return Left(const ServerFailure('R2 credentials not found in .env'));
+      }
+      
       // Extract object key from public URL
-      // Example URL: https://pub-xxxxx.r2.dev/products/seller-123/uuid.jpg
-      final uri = Uri.parse(url);
-      final objectKey = uri.path.replaceFirst('/', '');
-
-      // Call delete Edge Function (to be implemented)
-      final response = await _supabase.functions.invoke(
-        'delete-image',
-        body: {'objectKey': objectKey},
-      );
-
-      if (response.status != 200) {
-        return Left(ServerFailure(
-          'Failed to delete image: ${response.data}',
-        ));
+      // URL: https://<domain>/<key>
+      // We assume _publicUrl is the prefix.
+      
+      String objectKey = url;
+      if (_publicUrl.isNotEmpty) {
+         final cleanPublicUrl = _publicUrl.endsWith('/') 
+            ? _publicUrl.substring(0, _publicUrl.length - 1) 
+            : _publicUrl;
+         if (url.startsWith(cleanPublicUrl)) {
+           objectKey = url.replaceFirst('$cleanPublicUrl/', '');
+         }
+      } else {
+        // Try to parse basic URL structure if public URL var is missing (fallback)
+        final uri = Uri.parse(url);
+        // Path usually includes the leading /
+        objectKey = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
       }
 
+      final actualBucket = _bucketName.isNotEmpty ? _bucketName : ''; 
+      if (actualBucket.isEmpty) {
+         return Left(const ServerFailure('R2_BUCKET_NAME not set for deletion context'));
+      }
+
+      await _minio.removeObject(actualBucket, objectKey);
+      
       return const Right(null);
+    } on MinioError catch (e) {
+       return Left(ServerFailure('R2 Delete Error: ${e.toString()}'));
     } on SocketException catch (e) {
       return Left(NetworkFailure('Network error during delete: ${e.message}'));
     } catch (e) {

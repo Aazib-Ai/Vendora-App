@@ -19,7 +19,11 @@ class OrderCompleteScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context, 
+                    AppRoutes.buyerHome, 
+                    (route) => false
+                  ),
                 ),
               ),
             ),

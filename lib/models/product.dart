@@ -4,7 +4,8 @@ import 'package:equatable/equatable.dart';
 enum ProductStatus {
   pending,
   approved,
-  rejected;
+  rejected,
+  reported;
 
   String toJson() => name;
 
@@ -185,6 +186,8 @@ class Product extends Equatable {
   final List<ProductVariant> variants;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? sellerName;
+  final String? categoryName;
 
   const Product({
     required this.id,
@@ -205,6 +208,8 @@ class Product extends Equatable {
     this.variants = const [],
     required this.createdAt,
     this.updatedAt,
+    this.sellerName,
+    this.categoryName,
   });
 
   /// Calculate current price considering active discount
@@ -236,7 +241,7 @@ class Product extends Equatable {
   }
 
   /// Compatibility getters
-  String get category => categoryId ?? '';
+  String get category => categoryName ?? categoryId ?? '';
   
   double get price => basePrice;
   
@@ -292,6 +297,8 @@ class Product extends Equatable {
       isActive: json['is_active'] as bool? ?? true,
       averageRating: (json['average_rating'] as num?)?.toDouble() ?? 0.0,
       reviewCount: json['review_count'] as int? ?? 0,
+      categoryName: json['categories'] != null ? json['categories']['name'] as String? : null,
+      sellerName: json['sellers'] != null ? json['sellers']['business_name'] as String? : null,
       images: (json['product_images'] as List<dynamic>?)
               ?.map((e) => ProductImage.fromJson(e as Map<String, dynamic>))
               .toList() ??

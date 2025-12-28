@@ -108,7 +108,7 @@ void main() async {
         Provider<OrderRepository>.value(value: orderRepository),
         // Provide IImageUploadService for product and category image uploads
         Provider<IImageUploadService>(
-          create: (_) => MockImageUploadService(), // Use MockImageUploadService until R2 Edge Functions are deployed
+          create: (_) => R2ImageUploadService(), // Use direct R2 upload
         ),
         // Provide CategoryRepository and CategoryProvider for seller category management
         Provider<CategoryRepository>.value(value: categoryRepository),

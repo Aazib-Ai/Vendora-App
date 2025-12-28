@@ -7,15 +7,14 @@ import 'package:vendora/models/cart_item_model.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart' as auth;
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  final bool isTab;
+  const CartScreen({super.key, this.isTab = false});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
 
 class _CartScreenState extends State<CartScreen> {
-  int _currentIndex = 1;
-
   @override
   void initState() {
     super.initState();
@@ -31,27 +30,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, AppRoutes.buyerNotifications);
-        break;
-      case 1:
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
-        break;
-      case 3:
-        Navigator.pushNamed(context, AppRoutes.settings);
-        break;
-      case 4:
-        Navigator.pushNamed(context, AppRoutes.profile);
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -59,10 +37,11 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       backgroundColor: Colors.white, // Keep it clean
       appBar: AppBar(
-        leading: InkWell(
+        leading: widget.isTab ? null : InkWell(
           onTap: () => Navigator.pop(context),
           child: const Icon(Icons.arrow_back, color: Colors.black),
         ),
+        automaticallyImplyLeading: !widget.isTab,
         elevation: 0,
         backgroundColor: Colors.white,
         title: const Text(
@@ -125,13 +104,6 @@ class _CartScreenState extends State<CartScreen> {
             ],
           );
         },
-      ),
-
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavTap,
-        showNotifications: true,
-        role: NavigationRole.buyer,
       ),
     );
   }

@@ -11,6 +11,7 @@ import 'package:vendora/features/admin/presentation/screens/manage_users_screen.
 import 'package:vendora/features/admin/presentation/screens/seller_kyc_screen.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
+import 'package:vendora/features/admin/domain/entities/admin_stats.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -102,7 +103,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       body: Consumer<AdminDashboardProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading && provider.stats == provider.stats) {
+          if (provider.isLoading && provider.stats == AdminStats.empty()) {
             return const Center(
               child: CircularProgressIndicator(
                 color: Color(0xFF1A1A2E),

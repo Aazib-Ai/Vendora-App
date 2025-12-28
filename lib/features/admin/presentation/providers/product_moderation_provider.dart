@@ -20,6 +20,7 @@ class ProductModerationProvider extends ChangeNotifier {
   List<Product> _approvedProducts = [];
   List<Product> _rejectedProducts = [];
   List<Product> _hiddenProducts = [];
+  List<Product> _reportedProducts = [];
   
   bool _isLoading = false;
   String? _error;
@@ -29,6 +30,7 @@ class ProductModerationProvider extends ChangeNotifier {
   List<Product> get approvedProducts => _approvedProducts;
   List<Product> get rejectedProducts => _rejectedProducts;
   List<Product> get hiddenProducts => _hiddenProducts;
+  List<Product> get reportedProducts => _reportedProducts;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -36,6 +38,7 @@ class ProductModerationProvider extends ChangeNotifier {
   int get approvedCount => _approvedProducts.length;
   int get rejectedCount => _rejectedProducts.length;
   int get hiddenCount => _hiddenProducts.length;
+  int get reportedCount => _reportedProducts.length;
 
   /// Load all products and filter by status
   Future<void> loadAllProducts() async {
@@ -44,8 +47,12 @@ class ProductModerationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Fetch all products with a large limit
-      final result = await _productRepository.getProducts(limit: 1000);
+      // Fetch all products with a large limit (include pending and inactive for moderation)
+      final result = await _productRepository.getProducts(
+        limit: 1000,
+        onlyApproved: false,
+        onlyActive: false,
+      );
 
       result.fold(
         (failure) {
@@ -69,6 +76,10 @@ class ProductModerationProvider extends ChangeNotifier {
           
           _hiddenProducts = products
               .where((p) => !p.isActive && p.status == ProductStatus.approved)
+              .toList();
+
+          _reportedProducts = products
+              .where((p) => p.status == ProductStatus.reported)
               .toList();
           
           _isLoading = false;

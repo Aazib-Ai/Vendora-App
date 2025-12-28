@@ -82,24 +82,6 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 3,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(context, AppRoutes.buyerHome);
-              break;
-            case 1:
-              Navigator.pushNamed(context, AppRoutes.cart);
-              break;
-            case 4:
-              Navigator.pushNamed(context, AppRoutes.profile);
-              break;
-          }
-        },
-        role: NavigationRole.buyer,
-      ),
     );
   }
 }

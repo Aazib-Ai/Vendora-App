@@ -38,7 +38,7 @@ class _HomeScreenContent extends StatefulWidget {
 
 class _HomeScreenContentState extends State<_HomeScreenContent> {
   final ScrollController _scrollController = ScrollController();
-  int _currentIndex = 2; // Home tab
+  // removed _currentIndex as it's now handled by BuyerShellScreen
 
   @override
   void initState() {
@@ -59,28 +59,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
     }
   }
 
-  void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
-    
-    // Navigation logic matching original implementation
-    switch (index) {
-      case 0:
-        Navigator.pushNamed(context, AppRoutes.buyerNotifications);
-        break;
-      case 1:
-        Navigator.pushNamed(context, AppRoutes.cart);
-        break;
-      case 2:
-        // Already on home
-        break;
-      case 3:
-        Navigator.pushNamed(context, AppRoutes.settings);
-        break;
-      case 4:
-        Navigator.pushNamed(context, AppRoutes.profile);
-        break;
-    }
-  }
+  // removed _onNavTap
 
   void _openFilterSheet(BuildContext context) {
     showModalBottomSheet(
@@ -175,11 +154,7 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // AppColors.background
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavTap,
-        role: NavigationRole.buyer,
-      ),
+      // body handles the content
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => context.read<HomeProvider>().refresh(),

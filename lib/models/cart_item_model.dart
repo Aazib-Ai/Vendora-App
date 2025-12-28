@@ -28,19 +28,40 @@ class CartItem extends Equatable {
   double get total => quantity * unitPrice;
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
-    // Determine sellerId based on JSON structure complexity
-    final product = json['products'] as Map<String, dynamic>?;
-    final sellerId = product != null ? product['seller_id'] as String : json['seller_id'] as String? ?? '';
+    final product = json['products'];
+    
+    String extractedProductName;
+    double extractedUnitPrice;
+    String extractedSellerId;
+    String? extractedImageUrl;
+
+    if (product != null && product is Map) {
+       // Nested structure from Supabase join
+       extractedProductName = product['name'] as String? ?? 'Unknown Product';
+       extractedUnitPrice = (product['base_price'] as num?)?.toDouble() ?? 0.0;
+       extractedSellerId = product['seller_id'] as String? ?? '';
+       
+       final images = product['product_images'] as List?;
+       if (images != null && images.isNotEmpty) {
+         extractedImageUrl = images[0]['url'] as String?;
+       }
+    } else {
+       // Flat structure or legacy
+       extractedProductName = json['product_name'] as String? ?? 'Unknown Product';
+       extractedUnitPrice = (json['unit_price'] as num?)?.toDouble() ?? 0.0;
+       extractedSellerId = json['seller_id'] as String? ?? '';
+       extractedImageUrl = json['image_url'] as String?;
+    }
 
     return CartItem(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       productId: json['product_id'] as String,
-      productName: json['product_name'] as String,
+      productName: extractedProductName,
       quantity: json['quantity'] as int,
-      unitPrice: (json['unit_price'] as num).toDouble(),
-      imageUrl: json['image_url'] as String?,
-      sellerId: sellerId,
+      unitPrice: extractedUnitPrice,
+      imageUrl: extractedImageUrl,
+      sellerId: extractedSellerId,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

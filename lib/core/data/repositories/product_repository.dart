@@ -24,6 +24,8 @@ abstract class IProductRepository {
     String? category,
     String? searchQuery,
     ProductSortOption? sortBy,
+    bool onlyApproved = true,
+    bool onlyActive = true,
   });
 
   /// Get a single product by ID
@@ -69,6 +71,8 @@ class ProductRepository implements IProductRepository {
     String? category,
     String? searchQuery,
     ProductSortOption? sortBy,
+    bool onlyApproved = true,
+    bool onlyActive = true,
   }) async {
     try {
       // Check offline status first
@@ -94,13 +98,20 @@ class ProductRepository implements IProductRepository {
       // Build query
       dynamic query = _supabaseConfig.from('products').select('''
         *,
-        product_images(url, is_primary, display_order),
-        product_variants(id, sku, size, color, material, price, stock_quantity)
+        categories(name),
+        sellers(business_name),
+        product_images(id, product_id, url, is_primary, display_order),
+        product_variants(id, product_id, sku, size, color, material, price, stock_quantity, created_at)
       ''');
 
       // Filter for only approved and active products (for buyer visibility)
-      query = query.eq('status', 'approved');
-      query = query.eq('is_active', true);
+      if (onlyApproved) {
+        query = query.eq('status', 'approved');
+      }
+      
+      if (onlyActive) {
+        query = query.eq('is_active', true);
+      }
 
       // Apply category filter
       if (category != null && category.isNotEmpty) {
@@ -150,9 +161,9 @@ class ProductRepository implements IProductRepository {
 
       return Right(products);
     } on PostgrestException catch (e) {
-      return Left(ServerFailure(e.message));
+      return Left(ServerFailure('Database Error: ${e.message}\nDetails: ${e.details}\nHint: ${e.hint}'));
     } catch (e) {
-      // Fallback to cache on error
+      // Fallback to cache on unexpected error, but only if some data exists
       try {
          final cachedData = _cacheService.getCachedProducts();
          if (cachedData.isNotEmpty) {
@@ -163,7 +174,7 @@ class ProductRepository implements IProductRepository {
          }
       } catch (_) {}
       
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure('Unexpected Error: ${e.toString()}'));
     }
   }
 
@@ -172,8 +183,10 @@ class ProductRepository implements IProductRepository {
     try {
       final response = await _supabaseConfig.from('products').select('''
         *,
-        product_images(url, is_primary, display_order),
-        product_variants(id, sku, size, color, material, price, stock_quantity)
+        categories(name),
+        sellers(business_name),
+        product_images(id, product_id, url, is_primary, display_order),
+        product_variants(id, product_id, sku, size, color, material, price, stock_quantity, created_at)
       ''').eq('id', id).single();
 
       final product = Product.fromJson(response);

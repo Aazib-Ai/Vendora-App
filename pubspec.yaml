@@ -37,6 +37,7 @@ dependencies:
   timeago: ^3.6.0
   app_links: ^6.3.3  # Deep link handling
   image_picker: ^1.2.1
+  minio: ^3.5.8
 
 dev_dependencies:
   flutter_test:

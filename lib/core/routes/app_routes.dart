@@ -13,6 +13,7 @@ import 'package:vendora/features/auth/presentation/screens/email_verification_sc
 import 'package:vendora/features/auth/presentation/screens/email_confirmed_screen.dart';
 
 // BUYER
+import 'package:vendora/features/buyer/presentation/screens/buyer_shell_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/home_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/product_details_screen.dart';
 import 'package:vendora/features/buyer/presentation/screens/cart_screen.dart';
@@ -124,7 +125,7 @@ class AppRoutes {
 
     // BUYER
       case buyerHome:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        return MaterialPageRoute(builder: (_) => const BuyerShellScreen());
       case productDetails:
         final product = routeSettings.arguments as Product;
         return MaterialPageRoute(builder: (_) => ProductDetailsScreen(product: product));

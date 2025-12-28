@@ -3,7 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vendora/models/product.dart';
 import 'package:vendora/core/routes/app_routes.dart';
-import 'package:vendora/services/cart_service.dart';
+import 'package:vendora/features/cart/presentation/providers/cart_provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/review_provider.dart';
 import 'package:vendora/features/buyer/presentation/providers/wishlist_provider.dart';
 import 'package:vendora/features/buyer/presentation/screens/leave_review_screen.dart';
@@ -586,22 +586,71 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         ],
       ),
       child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _isOutOfStock ? null : () {
-             // Logic to add to cart
-             // If variants exist, need to pass selected variant
-             CartService.addToCart(widget.product, quantity, variant: _selectedVariant);
-             Navigator.pushNamed(context, AppRoutes.cart);
+        child: Consumer<CartProvider>(
+          builder: (context, cartProvider, child) {
+            return ElevatedButton(
+              onPressed: (_isOutOfStock || cartProvider.isLoading) 
+                  ? null 
+                  : () async {
+                      final user = context.read<auth.AuthProvider>().currentUser;
+                      if (user == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Please login to add items to cart"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        // Optionally navigate to login
+                        // Navigator.pushNamed(context, AppRoutes.login);
+                        return;
+                      }
+
+                      // Show loading or just wait
+                      try {
+                        await context.read<CartProvider>().addToCart(
+                          userId: user.id, 
+                          productId: widget.product.id, 
+                          quantity: quantity
+                        );
+                        
+                        if (context.mounted) {
+                          if (cartProvider.error != null) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(cartProvider.error!), backgroundColor: Colors.red),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Added to cart successfully!")),
+                            );
+                             // Navigate to cart
+                            Navigator.pushNamed(context, AppRoutes.cart);
+                          }
+                        }
+                      } catch (e) {
+                         if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                            );
+                         }
+                      }
+                  },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isOutOfStock ? Colors.grey : Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: cartProvider.isLoading 
+                ? const SizedBox(
+                    height: 20, 
+                    width: 20, 
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                : Text(
+                    _isOutOfStock ? "Out of Stock" : "Add to Cart - \$${(_currentPrice * quantity).toStringAsFixed(2)}",
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+            );
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isOutOfStock ? Colors.grey : Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: Text(
-            _isOutOfStock ? "Out of Stock" : "Add to Cart - \$${(_currentPrice * quantity).toStringAsFixed(2)}",
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
         ),
       ),
     );
