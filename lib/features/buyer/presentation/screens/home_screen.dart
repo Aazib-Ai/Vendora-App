@@ -358,7 +358,8 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
                         crossAxisCount: 2,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        childAspectRatio: 0.65,
+// Adjusted aspect ratio to prevent overflow
+                        childAspectRatio: 0.58,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {

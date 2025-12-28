@@ -29,10 +29,10 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: Colors.grey.shade200), // Softer border
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: 0.05), // Slightly stronger shadow
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -43,7 +43,7 @@ class ProductCard extends StatelessWidget {
           children: [
             // Image Section
             Expanded(
-              flex: 4,
+              flex: 5, // Give more space to image
               child: Stack(
                 children: [
                   ClipRRect(
@@ -101,7 +101,7 @@ class ProductCard extends StatelessWidget {
             
             // Details Section
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

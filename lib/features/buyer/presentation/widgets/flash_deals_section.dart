@@ -109,34 +109,54 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
               const Text(
                 'Flash Deals ⚡',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
+                  color: const Color(0xFFFFE5E5), // Soft red background
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFCCCC)),
                 ),
-                child: Text(
-                  _formatDuration(_timeLeft),
-                  style: const TextStyle(
-                    color: AppColors.error,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'monospace',
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_outlined, size: 14, color: AppColors.error),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDuration(_timeLeft),
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () {
+                  // Navigate to see all deals
+                },
+                child: const Text(
+                  'See All',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text('See All'),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         SizedBox(
-          height: 220,
+          height: 270, // Increased height to prevent overflow
           child: _buildContent(),
         ),
       ],
@@ -146,7 +166,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
   Widget _buildContent() {
     if (_isLoading) {
       return ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), // Add vertical padding for shadow
         scrollDirection: Axis.horizontal,
         itemCount: 3,
         separatorBuilder: (_, __) => const SizedBox(width: 16),
@@ -161,7 +181,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4), // Add vertical padding for shadow
       scrollDirection: Axis.horizontal,
       itemCount: _products.length,
       separatorBuilder: (_, __) => const SizedBox(width: 16),
@@ -173,31 +193,32 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
 
   Widget _buildLoadingCard() {
     return Container(
-      width: 150,
+      width: 160,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            flex: 3,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: Colors.grey.shade50,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(height: 14, width: 100, color: Colors.grey.shade200),
-                const SizedBox(height: 4),
-                Container(height: 14, width: 60, color: Colors.grey.shade200),
+                Container(height: 14, width: 100, color: Colors.grey.shade100),
+                const SizedBox(height: 6),
+                Container(height: 14, width: 60, color: Colors.grey.shade100),
               ],
             ),
           ),
@@ -209,6 +230,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
   Widget _buildDealCard(Product product) {
     // Calculate a simulated discount (20% off for flash deals)
     final originalPrice = (product.basePrice * 1.25).round();
+    final discountPercent = 20;
     
     return GestureDetector(
       onTap: () {
@@ -219,94 +241,170 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
         );
       },
       child: Container(
-        width: 150,
+        width: 160,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image
             Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                ),
-                child: Center(
-                  child: product.imageUrl.startsWith('http')
-                      ? Image.network(
-                          product.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.grey),
-                        )
-                      : Image.asset(
-                          product.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.grey),
+              flex: 5,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF9F9F9),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                      child: product.imageUrl.startsWith('http')
+                          ? Image.network(
+                              product.imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.grey),
+                            )
+                          : Image.asset(
+                              product.imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.grey),
+                            ),
+                    ),
+                  ),
+                  // Discount Badge
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '-$discountPercent%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
-                ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             
             // Info
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(
-                     product.name,
-                     maxLines: 1,
-                     overflow: TextOverflow.ellipsis,
-                     style: const TextStyle(fontWeight: FontWeight.w600),
-                   ),
-                   const SizedBox(height: 4),
-                   Row(
-                     children: [
-                       Text(
-                         product.formattedPrice,
-                         style: const TextStyle(
-                           fontWeight: FontWeight.bold,
-                           color: AppColors.accent,
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                     Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Text(
+                           product.category.toUpperCase(),
+                           style: const TextStyle(
+                             fontSize: 9, 
+                             color: Colors.grey,
+                             fontWeight: FontWeight.bold
+                           ),
+                           maxLines: 1,
                          ),
-                       ),
-                       const SizedBox(width: 6),
-                       Text(
-                         'Rs.$originalPrice',
-                         style: TextStyle(
-                           fontSize: 12,
-                           decoration: TextDecoration.lineThrough,
-                           color: Colors.grey.shade500,
+                         const SizedBox(height: 2),
+                         Text(
+                           product.name,
+                           maxLines: 2,
+                           overflow: TextOverflow.ellipsis,
+                           style: const TextStyle(
+                             fontWeight: FontWeight.w600,
+                             fontSize: 13,
+                             height: 1.2,
+                           ),
                          ),
-                       ),
-                     ],
-                   ),
-                   const SizedBox(height: 8),
-                   // Progress bar for "Sold" - based on stock
-                   Stack(
-                     children: [
-                       Container(
-                         height: 4,
-                         width: double.infinity,
-                         decoration: BoxDecoration(
-                           color: Colors.grey.shade200,
-                           borderRadius: BorderRadius.circular(2),
+                       ],
+                     ),
+                     
+                     Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Row(
+                           children: [
+                             Text(
+                               product.formattedPrice,
+                               style: const TextStyle(
+                                 fontWeight: FontWeight.bold,
+                                 color: AppColors.primary,
+                                 fontSize: 15,
+                               ),
+                             ),
+                             const SizedBox(width: 6),
+                             Text(
+                               'Rs.$originalPrice',
+                               style: TextStyle(
+                                 fontSize: 11,
+                                 decoration: TextDecoration.lineThrough,
+                                 color: Colors.grey.shade400,
+                               ),
+                             ),
+                           ],
                          ),
-                       ),
-                       Container(
-                         height: 4,
-                         width: (130 - (product.stockQuantity * 2.0)).clamp(20.0, 120.0),
-                         decoration: BoxDecoration(
-                           color: AppColors.accent,
-                           borderRadius: BorderRadius.circular(2),
+                         const SizedBox(height: 6),
+                         // Progress bar for "Sold" - based on stock
+                         Row(
+                           children: [
+                             Expanded(
+                               child: Stack(
+                                 children: [
+                                   Container(
+                                     height: 4,
+                                     width: double.infinity,
+                                     decoration: BoxDecoration(
+                                       color: Colors.grey.shade200,
+                                       borderRadius: BorderRadius.circular(2),
+                                     ),
+                                   ),
+                                   Container(
+                                     height: 4,
+                                     width: (130 - (product.stockQuantity * 2.0)).clamp(20.0, 100.0),
+                                     decoration: BoxDecoration(
+                                       gradient: const LinearGradient(
+                                          colors: [AppColors.accent, Color(0xFFFF8A65)]
+                                       ),
+                                       borderRadius: BorderRadius.circular(2),
+                                     ),
+                                   ),
+                                 ],
+                               ),
+                             ),
+                             const SizedBox(width: 6),
+                             const Text(
+                               'Sold',
+                               style: TextStyle(fontSize: 9, color: Colors.grey),
+                             )
+                           ],
                          ),
-                       ),
-                     ],
-                   ),
-                ],
+                       ],
+                     ),
+                  ],
+                ),
               ),
             ),
           ],
