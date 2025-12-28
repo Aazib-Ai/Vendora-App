@@ -63,8 +63,8 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacementNamed(context, route);
       }
     } else {
-      // Not authenticated - go to onboarding
-      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+      // Not authenticated - go to login
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
 

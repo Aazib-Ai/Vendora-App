@@ -174,11 +174,66 @@ class AuthRepository {
     }
   }
 
+  /// Change user password with current password verification
+  /// Requires current password for security
+  /// For logged-in users only (in-app)
+  Future<Either<Failure, void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _supabaseConfig.auth.currentUser;
+      if (user == null) {
+        return const Left(AuthFailure('No authenticated user'));
+      }
+
+      // Verify current password by attempting re-authentication
+      final response = await _supabaseConfig.auth.signInWithPassword(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      if (response.user == null) {
+        return const Left(AuthFailure('Current password is incorrect'));
+      }
+
+      // Update to new password
+      await _supabaseConfig.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      if (kDebugMode) {
+        print('✓ Password changed successfully');
+      }
+
+      return const Right(null);
+    } on AuthException catch (e) {
+      if (kDebugMode) {
+        print('✗ Change password error: ${e.message}');
+      }
+      return Left(AuthFailure.fromException(e));
+    } catch (e) {
+      if (kDebugMode) {
+        print('✗ Change password error: $e');
+      }
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
   /// Send password reset email
   /// Validates: Requirement 2.5
   Future<Either<Failure, void>> resetPassword(String email) async {
     try {
-      await _supabaseConfig.auth.resetPasswordForEmail(email);
+      // We use a generic redirect URL. Supabase will append the token.
+      // If the user has a website, they should configure this URL in Supabase
+      // to point to their password reset page.
+      // If opened on mobile, deep linking can still intercept if configured.
+      await _supabaseConfig.auth.resetPasswordForEmail(
+        email,
+        redirectTo: kIsWeb 
+            ? null // Use default site URL for web
+            : 'io.supabase.vendora://login-callback', // Deep link for mobile
+      );
       
       if (kDebugMode) {
         print('✓ Password reset email sent to: $email');

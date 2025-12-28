@@ -35,8 +35,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // ✅ Final step → Role Selection (Buyer/Seller/Admin)
-      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+      // ✅ Final step → Login Screen
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     }
   }
 

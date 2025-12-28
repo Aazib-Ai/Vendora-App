@@ -35,117 +35,140 @@ import 'package:vendora/core/data/repositories/category_repository.dart';
 import 'package:vendora/features/seller/presentation/providers/category_provider.dart';
 import 'package:vendora/features/admin/presentation/providers/admin_orders_provider.dart';
 import 'package:vendora/features/admin/presentation/providers/dispute_provider.dart';
+import 'package:vendora/features/admin/presentation/providers/admin_kyc_provider.dart';
 import 'package:vendora/services/image_upload_service.dart';
+
+// ... existing imports ...
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
-  final supabaseConfig = SupabaseConfig();
-  await supabaseConfig.initialize();
+  try {
+    // Initialize Supabase
+    final supabaseConfig = SupabaseConfig();
+    await supabaseConfig.initialize();
 
-  // Initialize Cache Service
-  final cacheService = CacheService();
-  await cacheService.init();
+    // Initialize Cache Service
+    final cacheService = CacheService();
+    await cacheService.init();
 
-  // Initialize Deep Link Service
-  final deepLinkService = DeepLinkService(supabaseConfig);
-  await deepLinkService.initialize();
+    // Initialize Deep Link Service
+    final deepLinkService = DeepLinkService(supabaseConfig);
+    await deepLinkService.initialize();
 
-  // Create repositories
-  final authRepository = AuthRepository(supabaseConfig);
-  final cartRepository = CartRepository(supabaseConfig: supabaseConfig);
-  final productRepository = ProductRepository(supabaseConfig: supabaseConfig, cacheService: cacheService);
-  final wishlistRepository = WishlistRepository(supabaseConfig: supabaseConfig);
-  final reviewRepository = ReviewRepository(supabaseConfig: supabaseConfig);
-  final notificationRepository = NotificationRepository(supabaseConfig: supabaseConfig);
-  final addressRepository = AddressRepository(supabaseConfig: supabaseConfig);
-  final sellerRepository = SellerRepository(supabaseConfig: supabaseConfig);
-  final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
-  final adminRepository = AdminRepositoryImpl(supabaseConfig: supabaseConfig);
-  final categoryRepository = CategoryRepository(supabaseConfig: supabaseConfig);
+    // Create repositories
+    final authRepository = AuthRepository(supabaseConfig);
+    final cartRepository = CartRepository(supabaseConfig: supabaseConfig);
+    final productRepository = ProductRepository(supabaseConfig: supabaseConfig, cacheService: cacheService);
+    final wishlistRepository = WishlistRepository(supabaseConfig: supabaseConfig);
+    final reviewRepository = ReviewRepository(supabaseConfig: supabaseConfig);
+    final notificationRepository = NotificationRepository(supabaseConfig: supabaseConfig);
+    final addressRepository = AddressRepository(supabaseConfig: supabaseConfig);
+    final sellerRepository = SellerRepository(supabaseConfig: supabaseConfig);
+    final orderRepository = OrderRepository(supabaseConfig: supabaseConfig);
+    final adminRepository = AdminRepositoryImpl(supabaseConfig: supabaseConfig);
+    final categoryRepository = CategoryRepository(supabaseConfig: supabaseConfig);
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(
-          create: (_) => auth.AuthProvider(authRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CartProvider(cartRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WishlistProvider(
-            wishlistRepository: wishlistRepository,
-            productRepository: productRepository,
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(
+            create: (_) => auth.AuthProvider(authRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => CartProvider(cartRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => WishlistProvider(
+              wishlistRepository: wishlistRepository,
+              productRepository: productRepository,
+            ),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => ReviewProvider(reviewRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => NotificationProvider(notificationRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => SellerDashboardProvider(
+              sellerRepository: sellerRepository,
+            ),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AddressProvider(addressRepository: addressRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => CheckoutProvider(
+              orderRepository: orderRepository,
+              cartRepository: cartRepository,
+            ),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AdminDashboardProvider(adminRepository),
+          ),
+          // Provide ProductRepository for seller and buyer screens
+          Provider<ProductRepository>.value(value: productRepository),
+          // Provide OrderRepository for seller dashboard and other screens
+          Provider<OrderRepository>.value(value: orderRepository),
+          // Provide IImageUploadService for product and category image uploads
+          Provider<IImageUploadService>(
+            create: (_) => R2ImageUploadService(), // Use direct R2 upload
+          ),
+          // Provide CategoryRepository and CategoryProvider for seller category management
+          Provider<CategoryRepository>.value(value: categoryRepository),
+          ChangeNotifierProvider(
+            create: (ctx) => CategoryProvider(
+              categoryRepository: categoryRepository,
+              imageUploadService: ctx.read<IImageUploadService>(),
+            ),
+          ),
+          // Provide SellerRepository for seller profile operations
+          Provider<SellerRepository>.value(value: sellerRepository),
+          // Provide deep link service for navigation handling
+          Provider<DeepLinkService>.value(value: deepLinkService),
+          
+          // Admin Providers
+          Provider<IAdminRepository>.value(value: adminRepository),
+          ChangeNotifierProvider(
+            create: (_) => AdminSellerProvider(sellerRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => ProductModerationProvider(
+              productRepository: productRepository,
+              adminRepository: adminRepository,
+            ),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AdminOrdersProvider(orderRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => DisputeProvider(adminRepository: adminRepository),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => AdminKYCProvider(sellerRepository),
+          ),
+        ],
+        child: VendoraApp(deepLinkService: deepLinkService),
+      ),
+    );
+  } catch (e, stack) {
+    debugPrint('Failed to initialize app: $e');
+    debugPrint(stack.toString());
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Text('Failed to initialize app:\n$e\n\nStack Trace:\n$stack'),
+            ),
           ),
         ),
-        ChangeNotifierProvider(
-          create: (_) => ReviewProvider(reviewRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => NotificationProvider(notificationRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => SellerDashboardProvider(
-            sellerRepository: sellerRepository,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AddressProvider(addressRepository: addressRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CheckoutProvider(
-            orderRepository: orderRepository,
-            cartRepository: cartRepository,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AdminDashboardProvider(adminRepository),
-        ),
-        // Provide ProductRepository for seller and buyer screens
-        Provider<ProductRepository>.value(value: productRepository),
-        // Provide OrderRepository for seller dashboard and other screens
-        Provider<OrderRepository>.value(value: orderRepository),
-        // Provide IImageUploadService for product and category image uploads
-        Provider<IImageUploadService>(
-          create: (_) => R2ImageUploadService(), // Use direct R2 upload
-        ),
-        // Provide CategoryRepository and CategoryProvider for seller category management
-        Provider<CategoryRepository>.value(value: categoryRepository),
-        ChangeNotifierProvider(
-          create: (ctx) => CategoryProvider(
-            categoryRepository: categoryRepository,
-            imageUploadService: ctx.read<IImageUploadService>(),
-          ),
-        ),
-        // Provide SellerRepository for seller profile operations
-        Provider<SellerRepository>.value(value: sellerRepository),
-        // Provide deep link service for navigation handling
-        Provider<DeepLinkService>.value(value: deepLinkService),
-        
-        // Admin Providers
-        Provider<IAdminRepository>.value(value: adminRepository),
-        ChangeNotifierProvider(
-          create: (_) => AdminSellerProvider(sellerRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ProductModerationProvider(
-            productRepository: productRepository,
-            adminRepository: adminRepository,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AdminOrdersProvider(orderRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => DisputeProvider(adminRepository: adminRepository),
-        ),
-      ],
-      child: VendoraApp(deepLinkService: deepLinkService),
-    ),
-  );
+      ),
+    ));
+  }
 }
 
 class VendoraApp extends StatefulWidget {

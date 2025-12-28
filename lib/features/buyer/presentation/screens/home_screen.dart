@@ -63,21 +63,16 @@ class _HomeScreenContentState extends State<_HomeScreenContent> {
   // removed _onNavTap
 
   void _openFilterSheet(BuildContext context) {
+    // Capture provider from the parent context before opening the sheet
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
-      builder: (context) {
-         // Create a wrapper to access provider in modal
-         // IMPORTANT: We need to access the provider from the parent context
-         // because the bottom sheet is in a different tree subtree.
-         // However, since we wrapped HomeScreen with ChangeNotifierProvider, 
-         // we might need to pass the provider instance or re-provide it.
-         // A cleaner way is to pass the provider value.
-         final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-         
+      builder: (sheetContext) {
          return ChangeNotifierProvider.value(
             value: homeProvider,
             child: Consumer<HomeProvider>(

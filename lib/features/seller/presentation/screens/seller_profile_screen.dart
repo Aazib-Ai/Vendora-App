@@ -129,6 +129,18 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 onPressed: _isLoading ? () {} : _saveProfile,
                 isLoading: _isLoading,
               ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.changePassword),
+                icon: const Icon(Icons.lock_outline),
+                label: const Text('Change Password'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               const SizedBox(height: 32),
               const Divider(),
               const SizedBox(height: 16),

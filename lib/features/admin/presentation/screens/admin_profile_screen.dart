@@ -79,7 +79,7 @@ class AdminProfileScreen extends StatelessWidget {
                   icon: Icons.lock_outline,
                   title: 'Change Password',
                   onTap: () {
-                    // TODO: Navigate to change password
+                    Navigator.pushNamed(context, AppRoutes.changePassword);
                   },
                 ),
                 _SettingsTile(

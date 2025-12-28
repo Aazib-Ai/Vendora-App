@@ -167,17 +167,51 @@ class AuthProvider with ChangeNotifier {
   Future<bool> resetPassword(String email) async {
     _setState(AuthState.loading);
     _errorMessage = null;
+    notifyListeners();
 
     final result = await _authRepository.resetPassword(email);
 
     return result.fold(
       (failure) {
         _errorMessage = failure.message;
-        _setState(AuthState.unauthenticated);
+        _setState(AuthState.error);
         return false;
       },
       (_) {
-        _setState(AuthState.unauthenticated);
+        _setState(AuthState.unauthenticated); // Stay unauthenticated after sending link
+        return true;
+      },
+    );
+  }
+
+  /// Change password with current password verification
+  /// For logged-in users only
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _setState(AuthState.loading);
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _authRepository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+
+    return result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+        _setState(AuthState.error); // Or keep authenticated but show error
+        // Note: We might want to reset to authenticated if it was just a wrong password
+        if (_state == AuthState.error) {
+             // If we want to keep the UI responsive without kicking user out conceptually (though provider state is just enum)
+             // But treating as error state is fine for UI feedback
+        }
+        return false;
+      },
+      (_) {
+        _setState(AuthState.authenticated);
         return true;
       },
     );

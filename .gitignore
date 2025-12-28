@@ -84,3 +84,6 @@ app.*.map.json
 vendora-backend-enhancement/
 test/
 
+
+# YoYo AI version control directory
+.yoyo/

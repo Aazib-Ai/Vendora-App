@@ -71,6 +71,7 @@ class AppRoutes {
   static const String orderComplete = '/buyer/order-complete';
   static const String profile = '/buyer/profile';
   static const String settings = '/buyer/settings';
+  static const String changePassword = '/change-password';
   static const String helpCenter = '/buyer/help-center';
   static const String contactUs = '/buyer/contact-us';
   static const String reportProblem = '/buyer/report-problem';

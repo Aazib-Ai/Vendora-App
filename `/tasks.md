@@ -202,6 +202,7 @@ This implementation plan is organized into clear sections: Backend Setup, Fronte
   - [x] 12.6 Implement sorting options
     - Sort by price, rating, newest
     - _Requirements: 5.4_
+    - Fixed filter button crashing due to ProviderNotFoundException
   - [x] 12.7 Write property test for sort order
     - **Property 6: Product Sort Order Correctness**
     - **Validates: Requirements 5.4**

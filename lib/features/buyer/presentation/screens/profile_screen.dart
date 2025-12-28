@@ -154,7 +154,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // ---------------- LOGOUT SECTION ----------------
           _sectionTitle("Security"),
 
-          _logoutTile(
+          _profileTile(
+          icon: Icons.lock_outline,
+          label: 'Change Password',
+          subtitle: 'Update your account password',
+          onTap: () => Navigator.pushNamed(context, AppRoutes.changePassword),
+        ),
+        const SizedBox(height: 24),
+        _logoutTile(
             icon: Icons.logout,
             label: "Logout",
             onTap: () async {
