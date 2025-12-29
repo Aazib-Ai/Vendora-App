@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vendora/core/routes/app_routes.dart';
+import 'package:vendora/core/services/deep_link_service.dart';
 import 'package:vendora/features/auth/presentation/providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,15 +38,30 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
+    // Skip navigation if password reset deep link is being handled
+    final deepLinkService = context.read<DeepLinkService>();
+    if (deepLinkService.isInPasswordResetMode) {
+      return; // Let the deep link handler navigate to reset password screen
+    }
+
     final authProvider = context.read<AuthProvider>();
     
-    // Wait for auth state to be determined
+    // Wait for auth state to be determined, but also check for password reset mode
     while (authProvider.state == AuthState.initial || authProvider.state == AuthState.loading) {
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return;
+      // Check flag again during wait - it might have been set
+      if (deepLinkService.isInPasswordResetMode) {
+        return;
+      }
     }
 
     if (!mounted) return;
+    
+    // Final check before any navigation
+    if (deepLinkService.isInPasswordResetMode) {
+      return;
+    }
 
     // Navigate based on authentication state
     if (authProvider.isAuthenticated) {
@@ -63,8 +79,8 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacementNamed(context, route);
       }
     } else {
-      // Not authenticated - go to login
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      // Not authenticated - show onboarding first
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     }
   }
 

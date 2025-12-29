@@ -28,6 +28,18 @@ class DeepLinkService {
 
   void clearPendingLink() => _pendingInitialLink = null;
 
+  /// Flag to indicate if a password reset deep link is being processed.
+  /// Used by SplashScreen to avoid auto-navigating away.
+  bool _isInPasswordResetMode = false;
+  bool get isInPasswordResetMode => _isInPasswordResetMode;
+  
+  void setPasswordResetMode(bool value) {
+    _isInPasswordResetMode = value;
+    if (kDebugMode) {
+      print('DeepLinkService: Password reset mode set to: $value');
+    }
+  }
+
   /// Initialize the deep link listener.
   /// Call this once in main() after Supabase is initialized.
   Future<void> initialize() async {
@@ -119,6 +131,8 @@ class DeepLinkService {
   }
   
   Future<void> _handlePasswordResetCallback(Uri uri) async {
+    // Set the flag to prevent SplashScreen from auto-navigating
+    setPasswordResetMode(true);
     try {
       // Check for code in query params (PKCE flow)
       final code = uri.queryParameters['code'];
